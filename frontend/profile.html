@@ -1,0 +1,4099 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="DueMate - User Profile"
+    >
+
+    <title>DueMate - Profile</title>
+
+
+    <style>
+
+        /* =========================================================
+           DUE MATE
+           PROFILE PAGE
+
+           Profile information = profile.html
+           Appearance / Theme = settings.html
+           Notifications = settings.html
+        ========================================================= */
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+
+        :root {
+
+            --bg: #f5f6ff;
+
+            --surface:
+                rgba(255, 255, 255, 0.78);
+
+            --surface-solid:
+                #ffffff;
+
+            --surface-soft:
+                rgba(255, 255, 255, 0.58);
+
+            --text:
+                #25263a;
+
+            --muted:
+                #777b91;
+
+            --border:
+                rgba(255, 255, 255, 0.90);
+
+            --purple:
+                #756cff;
+
+            --blue:
+                #5d9cff;
+
+            --pink:
+                #ff86b6;
+
+            --mint:
+                #55d5b0;
+
+            --yellow:
+                #ffd76b;
+
+            --danger:
+                #ff6f91;
+
+            --grid:
+                rgba(91, 99, 150, 0.055);
+
+            --shadow:
+                rgba(60, 66, 120, 0.15);
+        }
+
+
+        body.dark {
+
+            --bg:
+                #0b1020;
+
+            --surface:
+                rgba(20, 26, 49, 0.80);
+
+            --surface-solid:
+                #151b32;
+
+            --surface-soft:
+                rgba(28, 35, 62, 0.60);
+
+            --text:
+                #f4f5ff;
+
+            --muted:
+                #aeb3ca;
+
+            --border:
+                rgba(255, 255, 255, 0.09);
+
+            --purple:
+                #958cff;
+
+            --blue:
+                #73adff;
+
+            --pink:
+                #ff91bf;
+
+            --mint:
+                #64dfc0;
+
+            --yellow:
+                #ffe08a;
+
+            --grid:
+                rgba(185, 195, 255, 0.035);
+
+            --shadow:
+                rgba(0, 0, 0, 0.45);
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+            font-family:
+                "Segoe UI",
+                Inter,
+                Arial,
+                sans-serif;
+
+            color:
+                var(--text);
+
+            background:
+                var(--bg);
+
+            overflow-x: hidden;
+
+            transition:
+                background 0.4s ease,
+                color 0.4s ease;
+        }
+
+
+        button,
+        input {
+            font: inherit;
+        }
+
+
+        button {
+            cursor: pointer;
+        }
+
+
+        /* =========================================================
+           BACKGROUND
+        ========================================================= */
+
+
+        .background {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: -10;
+
+            overflow: hidden;
+
+            background:
+                var(--bg);
+
+            transition:
+                background 0.4s ease;
+        }
+
+
+        .background::before {
+
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            background:
+
+                radial-gradient(
+                    circle at 15% 15%,
+                    rgba(117, 108, 255, 0.12),
+                    transparent 30%
+                ),
+
+                radial-gradient(
+                    circle at 85% 30%,
+                    rgba(85, 213, 176, 0.10),
+                    transparent 28%
+                ),
+
+                radial-gradient(
+                    circle at 50% 90%,
+                    rgba(255, 134, 182, 0.10),
+                    transparent 30%
+                );
+        }
+
+
+        .grid {
+
+            position: absolute;
+
+            inset: -100px;
+
+            background-image:
+
+                linear-gradient(
+                    var(--grid) 1px,
+                    transparent 1px
+                ),
+
+                linear-gradient(
+                    90deg,
+                    var(--grid) 1px,
+                    transparent 1px
+                );
+
+            background-size:
+                44px 44px;
+
+            transform:
+                perspective(500px)
+                rotateX(55deg)
+                scale(1.4);
+
+            transform-origin:
+                center bottom;
+
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    transparent 5%,
+                    black 35%,
+                    black 75%,
+                    transparent 100%
+                );
+
+            animation:
+                gridMove 30s linear infinite;
+        }
+
+
+        @keyframes gridMove {
+
+            from {
+
+                background-position:
+                    0 0,
+                    0 0;
+            }
+
+            to {
+
+                background-position:
+                    44px 44px,
+                    44px 44px;
+            }
+        }
+
+
+        .glow {
+
+            position: absolute;
+
+            border-radius: 50%;
+
+            filter:
+                blur(90px);
+
+            pointer-events:
+                none;
+
+            opacity:
+                0.25;
+        }
+
+
+        .glow-one {
+
+            width: 430px;
+            height: 430px;
+
+            left: -180px;
+            top: -160px;
+
+            background:
+                var(--purple);
+
+            animation:
+                glowOne 18s ease-in-out infinite alternate;
+        }
+
+
+        .glow-two {
+
+            width: 400px;
+            height: 400px;
+
+            right: -170px;
+            top: 30%;
+
+            background:
+                var(--mint);
+
+            animation:
+                glowTwo 22s ease-in-out infinite alternate;
+        }
+
+
+        .glow-three {
+
+            width: 380px;
+            height: 380px;
+
+            left: 35%;
+            bottom: -220px;
+
+            background:
+                var(--pink);
+
+            animation:
+                glowThree 25s ease-in-out infinite alternate;
+        }
+
+
+        @keyframes glowOne {
+
+            from {
+
+                transform:
+                    translate(0, 0)
+                    scale(1);
+            }
+
+            to {
+
+                transform:
+                    translate(230px, 220px)
+                    scale(1.15);
+            }
+        }
+
+
+        @keyframes glowTwo {
+
+            from {
+
+                transform:
+                    translate(0, 0)
+                    scale(1);
+            }
+
+            to {
+
+                transform:
+                    translate(-210px, 120px)
+                    scale(1.12);
+            }
+        }
+
+
+        @keyframes glowThree {
+
+            from {
+
+                transform:
+                    translate(0, 0)
+                    scale(1);
+            }
+
+            to {
+
+                transform:
+                    translate(170px, -120px)
+                    scale(1.10);
+            }
+        }
+
+
+        /* =========================================================
+           FLOATING OBJECTS
+        ========================================================= */
+
+
+        .float-object {
+
+            position: absolute;
+
+            pointer-events:
+                none;
+
+            user-select:
+                none;
+
+            opacity:
+                0.17;
+
+            animation:
+                floatObject 9s ease-in-out infinite;
+        }
+
+
+        .float-one {
+
+            left: 7%;
+            top: 18%;
+
+            font-size:
+                32px;
+        }
+
+
+        .float-two {
+
+            right: 8%;
+            top: 18%;
+
+            font-size:
+                30px;
+
+            animation-delay:
+                -3s;
+        }
+
+
+        .float-three {
+
+            left: 10%;
+            bottom: 17%;
+
+            font-size:
+                28px;
+
+            animation-delay:
+                -5s;
+        }
+
+
+        .float-four {
+
+            right: 12%;
+            bottom: 18%;
+
+            font-size:
+                30px;
+
+            animation-delay:
+                -7s;
+        }
+
+
+        @keyframes floatObject {
+
+            0%,
+            100% {
+
+                transform:
+                    translateY(0)
+                    rotate(-4deg);
+            }
+
+            50% {
+
+                transform:
+                    translateY(-18px)
+                    rotate(6deg);
+            }
+        }
+
+
+        /* =========================================================
+           MAIN CONTAINER
+        ========================================================= */
+
+
+        .page {
+
+            width: 100%;
+
+            min-height: 100vh;
+
+            padding:
+                25px 20px 45px;
+        }
+
+
+        .container {
+
+            width:
+                min(1150px, 100%);
+
+            margin:
+                0 auto;
+        }
+
+
+        /* =========================================================
+           TOP BAR
+        ========================================================= */
+
+
+        .topbar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                15px;
+
+            margin-bottom:
+                25px;
+        }
+
+        .left-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar .menu-btn,
+        .topbar .calendar-btn,
+        .topbar .notification-btn {
+            width: 45px;
+            height: 45px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 20px;
+            box-shadow: 0 12px 30px var(--shadow);
+            backdrop-filter: blur(15px);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .topbar .calendar-btn {
+            width: auto;
+            min-width: 132px;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .topbar .calendar-date-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .topbar .notification-btn {
+            position: relative;
+        }
+
+        .topbar .menu-btn:hover,
+        .topbar .calendar-btn:hover,
+        .topbar .notification-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(117,108,255,0.08);
+        }
+
+        .brand {
+
+            display: flex;
+
+            align-items:
+                center;
+
+            gap:
+                12px;
+        }
+
+
+        .brand-logo {
+
+            width:
+                48px;
+
+            height:
+                48px;
+
+            display: flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                15px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            color:
+                white;
+
+            font-size:
+                22px;
+
+            box-shadow:
+                0 12px 30px
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.25
+                );
+        }
+
+
+        .brand-text h1 {
+
+            font-size:
+                20px;
+        }
+
+
+        .brand-text p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                11px;
+
+            margin-top:
+                2px;
+        }
+
+
+        .top-actions {
+
+            display: flex;
+
+            align-items:
+                center;
+
+            gap:
+                9px;
+        }
+
+
+        .top-btn {
+
+            min-height:
+                42px;
+
+            padding:
+                0 14px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                12px;
+
+            background:
+                var(--surface);
+
+            color:
+                var(--text);
+
+            box-shadow:
+                0 10px 25px
+                var(--shadow);
+
+            backdrop-filter:
+                blur(15px);
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease;
+        }
+
+
+        .top-btn:hover {
+
+            transform:
+                translateY(-2px);
+
+            background:
+                var(--surface-solid);
+        }
+
+
+        /* =========================================================
+           PAGE TITLE
+        ========================================================= */
+
+
+        .page-heading {
+
+            margin-bottom:
+                22px;
+        }
+
+
+        .page-heading h2 {
+
+            font-size:
+                clamp(
+                    28px,
+                    5vw,
+                    40px
+                );
+
+            letter-spacing:
+                -1px;
+
+            margin-bottom:
+                6px;
+        }
+
+
+        .page-heading p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                13px;
+        }
+
+
+        /* =========================================================
+           PROFILE HERO
+        ========================================================= */
+
+
+        .profile-hero {
+
+            position: relative;
+
+            display: flex;
+
+            align-items:
+                center;
+
+            gap:
+                25px;
+
+            padding:
+                30px;
+
+            margin-bottom:
+                20px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                28px;
+
+            background:
+                var(--surface);
+
+            box-shadow:
+                0 25px 65px
+                var(--shadow);
+
+            backdrop-filter:
+                blur(22px);
+
+            overflow:
+                hidden;
+
+            animation:
+                cardAppear 0.6s ease;
+        }
+
+
+        .profile-hero::after {
+
+            content: "";
+
+            position: absolute;
+
+            width:
+                250px;
+
+            height:
+                250px;
+
+            right:
+                -100px;
+
+            top:
+                -120px;
+
+            border-radius:
+                50%;
+
+            background:
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.10
+                );
+        }
+
+
+        @keyframes cardAppear {
+
+            from {
+
+                opacity:
+                    0;
+
+                transform:
+                    translateY(15px);
+            }
+
+            to {
+
+                opacity:
+                    1;
+
+                transform:
+                    translateY(0);
+            }
+        }
+
+
+        /* =========================================================
+           AVATAR
+        ========================================================= */
+
+
+        .avatar-wrapper {
+
+            position:
+                relative;
+
+            flex-shrink:
+                0;
+        }
+
+
+        .avatar {
+
+            width:
+                115px;
+
+            height:
+                115px;
+
+            display: flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                50%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            color:
+                white;
+
+            font-size:
+                42px;
+
+            font-weight:
+                800;
+
+            border:
+                5px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.55
+                );
+
+            box-shadow:
+                0 15px 35px
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.28
+                );
+
+            overflow:
+                hidden;
+        }
+
+
+        .avatar img {
+
+            width:
+                100%;
+
+            height:
+                100%;
+
+            object-fit:
+                cover;
+
+            display:
+                none;
+        }
+
+
+        .avatar.has-image img {
+
+            display:
+                block;
+        }
+
+
+        .avatar.has-image .avatar-letter {
+
+            display:
+                none;
+        }
+
+
+        .avatar-letter {
+
+            display:
+                block;
+        }
+
+
+        .online-dot {
+
+            position:
+                absolute;
+
+            width:
+                18px;
+
+            height:
+                18px;
+
+            right:
+                6px;
+
+            bottom:
+                7px;
+
+            border-radius:
+                50%;
+
+            background:
+                var(--mint);
+
+            border:
+                3px solid
+                var(--surface-solid);
+        }
+
+
+        /* =========================================================
+           HERO DETAILS
+        ========================================================= */
+
+
+        .hero-info {
+
+            position:
+                relative;
+
+            z-index:
+                2;
+
+            flex:
+                1;
+        }
+
+
+        .hero-info h3 {
+
+            font-size:
+                clamp(
+                    25px,
+                    4vw,
+                    34px
+                );
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .hero-email {
+
+            color:
+                var(--muted);
+
+            font-size:
+                13px;
+
+            margin-bottom:
+                13px;
+        }
+
+
+        .student-badge {
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            gap:
+                7px;
+
+            padding:
+                8px 12px;
+
+            border-radius:
+                11px;
+
+            background:
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.10
+                );
+
+            color:
+                var(--purple);
+
+            font-size:
+                11px;
+
+            font-weight:
+                800;
+        }
+
+
+        .edit-profile-btn {
+
+            position:
+                relative;
+
+            z-index:
+                3;
+
+            flex-shrink:
+                0;
+
+            min-height:
+                45px;
+
+            padding:
+                0 18px;
+
+            border:
+                0;
+
+            border-radius:
+                13px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            color:
+                white;
+
+            font-size:
+                12px;
+
+            font-weight:
+                800;
+
+            box-shadow:
+                0 12px 25px
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.22
+                );
+
+            transition:
+                transform 0.2s ease;
+        }
+
+
+        .edit-profile-btn:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        /* =========================================================
+           CONTENT GRID
+        ========================================================= */
+
+
+        .content-grid {
+
+            display:
+                grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap:
+                20px;
+        }
+
+
+        /* =========================================================
+           CARD
+        ========================================================= */
+
+
+        .card {
+
+            padding:
+                25px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                24px;
+
+            background:
+                var(--surface);
+
+            box-shadow:
+                0 18px 50px
+                var(--shadow);
+
+            backdrop-filter:
+                blur(20px);
+
+            animation:
+                cardAppear 0.7s ease;
+        }
+
+
+        .card-header {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                10px;
+
+            margin-bottom:
+                20px;
+        }
+
+
+        .card-title {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                10px;
+        }
+
+
+        .card-icon {
+
+            width:
+                38px;
+
+            height:
+                38px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                11px;
+
+            background:
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.10
+                );
+
+            font-size:
+                18px;
+        }
+
+
+        .card-header h3 {
+
+            font-size:
+                17px;
+        }
+
+
+        .card-header p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+
+            margin-top:
+                2px;
+        }
+
+
+        /* =========================================================
+           INFORMATION ROW
+        ========================================================= */
+
+
+        .info-list {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            gap:
+                12px;
+        }
+
+
+        .info-row {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                13px;
+
+            padding:
+                13px;
+
+            border-radius:
+                14px;
+
+            background:
+                var(--surface-soft);
+
+            border:
+                1px solid
+                rgba(
+                    120,
+                    125,
+                    160,
+                    0.08
+                );
+        }
+
+
+        .info-icon {
+
+            width:
+                38px;
+
+            height:
+                38px;
+
+            flex-shrink:
+                0;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                11px;
+
+            background:
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.08
+                );
+
+            font-size:
+                16px;
+        }
+
+
+        .info-content {
+
+            min-width:
+                0;
+        }
+
+
+        .info-label {
+
+            display:
+                block;
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+
+            margin-bottom:
+                3px;
+        }
+
+
+        .info-value {
+
+            display:
+                block;
+
+            color:
+                var(--text);
+
+            font-size:
+                13px;
+
+            font-weight:
+                700;
+
+            word-break:
+                break-word;
+        }
+
+
+        /* =========================================================
+           DIM EXAMPLE VALUES
+
+           Used only for default Department and Course.
+        ========================================================= */
+
+
+        .example-value {
+
+            color:
+                var(--muted);
+
+            font-weight:
+                500;
+        }
+
+
+        /* =========================================================
+           ACCOUNT ACTIONS
+        ========================================================= */
+
+
+        .action-list {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            gap:
+                10px;
+        }
+
+
+        .action-btn {
+
+            width:
+                100%;
+
+            min-height:
+                52px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                12px;
+
+            padding:
+                10px 13px;
+
+            border:
+                1px solid
+                rgba(
+                    120,
+                    125,
+                    160,
+                    0.10
+                );
+
+            border-radius:
+                14px;
+
+            background:
+                var(--surface-soft);
+
+            color:
+                var(--text);
+
+            text-align:
+                left;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease;
+        }
+
+
+        .action-btn:hover {
+
+            transform:
+                translateX(3px);
+
+            background:
+                var(--surface-solid);
+        }
+
+
+        .action-left {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                12px;
+        }
+
+
+        .action-icon {
+
+            width:
+                36px;
+
+            height:
+                36px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                10px;
+
+            background:
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.08
+                );
+
+            font-size:
+                16px;
+        }
+
+
+        .action-text strong {
+
+            display:
+                block;
+
+            font-size:
+                12px;
+
+            margin-bottom:
+                2px;
+        }
+
+
+        .action-text span {
+
+            display:
+                block;
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+        }
+
+
+        .arrow {
+
+            color:
+                var(--muted);
+
+            font-size:
+                17px;
+        }
+
+
+        /* =========================================================
+           ACCOUNT STATUS
+        ========================================================= */
+
+
+        .status-card {
+
+            margin-top:
+                20px;
+
+            padding:
+                20px;
+
+            border:
+                1px solid
+                rgba(
+                    85,
+                    213,
+                    176,
+                    0.15
+                );
+
+            border-radius:
+                20px;
+
+            background:
+                rgba(
+                    85,
+                    213,
+                    176,
+                    0.07
+                );
+        }
+
+
+        .status-header {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                10px;
+
+            margin-bottom:
+                12px;
+        }
+
+
+        .status-icon {
+
+            width:
+                35px;
+
+            height:
+                35px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                10px;
+
+            background:
+                rgba(
+                    85,
+                    213,
+                    176,
+                    0.12
+                );
+        }
+
+
+        .status-header h4 {
+
+            font-size:
+                13px;
+        }
+
+
+        .status-header p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+
+            margin-top:
+                2px;
+        }
+
+
+        .status-items {
+
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap:
+                8px;
+        }
+
+
+        .status-item {
+
+            padding:
+                10px;
+
+            border-radius:
+                11px;
+
+            background:
+                var(--surface-soft);
+
+            font-size:
+                10px;
+
+            color:
+                var(--muted);
+        }
+
+
+        .status-item strong {
+
+            display:
+                block;
+
+            color:
+                var(--mint);
+
+            font-size:
+                11px;
+
+            margin-bottom:
+                2px;
+        }
+
+
+        /* =========================================================
+           DANGER ZONE
+        ========================================================= */
+
+
+        .danger-zone {
+
+            margin-top:
+                20px;
+
+            padding:
+                20px;
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    111,
+                    145,
+                    0.16
+                );
+
+            border-radius:
+                20px;
+
+            background:
+                rgba(
+                    255,
+                    111,
+                    145,
+                    0.06
+                );
+        }
+
+
+        .danger-zone h4 {
+
+            color:
+                var(--danger);
+
+            font-size:
+                13px;
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .danger-zone p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+
+            line-height:
+                1.5;
+
+            margin-bottom:
+                12px;
+        }
+
+
+        .logout-btn {
+
+            width:
+                100%;
+
+            min-height:
+                45px;
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    111,
+                    145,
+                    0.20
+                );
+
+            border-radius:
+                12px;
+
+            background:
+                rgba(
+                    255,
+                    111,
+                    145,
+                    0.09
+                );
+
+            color:
+                var(--danger);
+
+            font-size:
+                12px;
+
+            font-weight:
+                800;
+
+            transition:
+                background 0.2s ease,
+                transform 0.2s ease;
+        }
+
+
+        .logout-btn:hover {
+
+            transform:
+                translateY(-2px);
+
+            background:
+                rgba(
+                    255,
+                    111,
+                    145,
+                    0.15
+                );
+        }
+
+
+        /* =========================================================
+           EDIT PROFILE MODAL
+        ========================================================= */
+
+
+        .modal-overlay {
+
+            position:
+                fixed;
+
+            inset:
+                0;
+
+            z-index:
+                1000;
+
+            display:
+                none;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            padding:
+                20px;
+
+            background:
+                rgba(
+                    10,
+                    13,
+                    30,
+                    0.48
+                );
+
+            backdrop-filter:
+                blur(8px);
+        }
+
+
+        .modal-overlay.show {
+
+            display:
+                flex;
+        }
+
+
+        .modal {
+
+            width:
+                min(500px, 100%);
+
+            padding:
+                25px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                24px;
+
+            background:
+                var(--surface-solid);
+
+            color:
+                var(--text);
+
+            box-shadow:
+                0 30px 80px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.25
+                );
+
+            animation:
+                modalAppear 0.25s ease;
+        }
+
+
+        @keyframes modalAppear {
+
+            from {
+
+                opacity:
+                    0;
+
+                transform:
+                    translateY(15px)
+                    scale(0.97);
+            }
+
+            to {
+
+                opacity:
+                    1;
+
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+        }
+
+
+        .modal-header {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            margin-bottom:
+                20px;
+        }
+
+
+        .modal-header h3 {
+
+            font-size:
+                20px;
+        }
+
+
+        .close-btn {
+
+            width:
+                35px;
+
+            height:
+                35px;
+
+            border:
+                0;
+
+            border-radius:
+                10px;
+
+            background:
+                rgba(
+                    120,
+                    125,
+                    160,
+                    0.08
+                );
+
+            color:
+                var(--text);
+
+            font-size:
+                18px;
+        }
+
+
+        .edit-group {
+
+            margin-bottom:
+                15px;
+        }
+
+
+        .edit-label {
+
+            display:
+                block;
+
+            margin-bottom:
+                7px;
+
+            color:
+                var(--muted);
+
+            font-size:
+                11px;
+
+            font-weight:
+                700;
+        }
+
+
+        .edit-input {
+
+            width:
+                100%;
+
+            min-height:
+                45px;
+
+            padding:
+                10px 13px;
+
+            border:
+                1px solid
+                rgba(
+                    120,
+                    125,
+                    160,
+                    0.16
+                );
+
+            border-radius:
+                11px;
+
+            outline:
+                none;
+
+            background:
+                var(--surface-soft);
+
+            color:
+                var(--text);
+        }
+
+
+        .edit-input:focus {
+
+            border-color:
+                var(--purple);
+
+            box-shadow:
+                0 0 0 3px
+                rgba(
+                    117,
+                    108,
+                    255,
+                    0.10
+                );
+        }
+
+
+        .edit-input::placeholder {
+
+            color:
+                var(--muted);
+
+            opacity:
+                0.75;
+        }
+
+
+        .modal-actions {
+
+            display:
+                flex;
+
+            gap:
+                10px;
+
+            margin-top:
+                20px;
+        }
+
+
+        .modal-btn {
+
+            flex:
+                1;
+
+            min-height:
+                45px;
+
+            border-radius:
+                11px;
+
+            font-size:
+                12px;
+
+            font-weight:
+                800;
+        }
+
+
+        .cancel-btn {
+
+            border:
+                1px solid
+                rgba(
+                    120,
+                    125,
+                    160,
+                    0.15
+                );
+
+            background:
+                var(--surface-soft);
+
+            color:
+                var(--text);
+        }
+
+
+        .save-btn {
+
+            border:
+                0;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            color:
+                white;
+        }
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+
+        .toast {
+
+            position:
+                fixed;
+
+            left:
+                50%;
+
+            bottom:
+                25px;
+
+            z-index:
+                2000;
+
+            transform:
+                translate(-50%, 100px);
+
+            min-width:
+                min(340px, 90%);
+
+            padding:
+                13px 17px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                14px;
+
+            background:
+                var(--surface-solid);
+
+            color:
+                var(--text);
+
+            box-shadow:
+                0 18px 45px
+                var(--shadow);
+
+            text-align:
+                center;
+
+            font-size:
+                12px;
+
+            opacity:
+                0;
+
+            pointer-events:
+                none;
+
+            transition:
+                transform 0.35s ease,
+                opacity 0.35s ease;
+        }
+
+
+        .toast.show {
+
+            transform:
+                translate(-50%, 0);
+
+            opacity:
+                1;
+        }
+
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+
+        @media (max-width: 850px) {
+
+            .content-grid {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .profile-hero {
+
+                align-items:
+                    flex-start;
+
+                flex-wrap:
+                    wrap;
+            }
+
+
+            .edit-profile-btn {
+
+                margin-left:
+                    140px;
+            }
+        }
+
+
+        @media (max-width: 600px) {
+
+            .page {
+
+                padding:
+                    18px 13px 35px;
+            }
+
+
+            .topbar {
+
+                align-items:
+                    flex-start;
+            }
+
+
+            .top-actions {
+
+                flex-wrap:
+                    wrap;
+
+                justify-content:
+                    flex-end;
+            }
+
+
+            .top-btn {
+
+                font-size:
+                    11px;
+
+                padding:
+                    0 10px;
+            }
+
+
+            .profile-hero {
+
+                flex-direction:
+                    column;
+
+                align-items:
+                    center;
+
+                text-align:
+                    center;
+
+                padding:
+                    25px 18px;
+            }
+
+
+            .hero-info {
+
+                width:
+                    100%;
+            }
+
+
+            .edit-profile-btn {
+
+                margin-left:
+                    0;
+
+                width:
+                    100%;
+            }
+
+
+            .card {
+
+                padding:
+                    20px 16px;
+            }
+
+
+            .status-items {
+
+                grid-template-columns:
+                    1fr;
+            }
+        }
+
+
+        @media (max-width: 400px) {
+
+            .brand-text h1 {
+
+                font-size:
+                    17px;
+            }
+
+
+            .brand-logo {
+
+                width:
+                    43px;
+
+                height:
+                    43px;
+            }
+
+
+            .top-actions {
+
+                gap:
+                    5px;
+            }
+
+
+            .top-btn {
+
+                min-height:
+                    38px;
+            }
+
+
+            .avatar {
+
+                width:
+                    100px;
+
+                height:
+                    100px;
+
+                font-size:
+                    35px;
+            }
+        }
+
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+
+                animation-duration:
+                    0.01ms !important;
+
+                animation-iteration-count:
+                    1 !important;
+
+                transition-duration:
+                    0.01ms !important;
+            }
+        }
+
+    </style>
+    <link rel="stylesheet" href="app-shell.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================================================
+         BACKGROUND
+    ========================================================= -->
+
+    <div class="background">
+
+        <div class="grid"></div>
+
+        <div class="glow glow-one"></div>
+
+        <div class="glow glow-two"></div>
+
+        <div class="glow glow-three"></div>
+
+
+        <div class="float-object float-one">
+            📚
+        </div>
+
+        <div class="float-object float-two">
+            🎓
+        </div>
+
+        <div class="float-object float-three">
+            ✏️
+        </div>
+
+        <div class="float-object float-four">
+            📅
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         MAIN PAGE
+    ========================================================= -->
+
+    <main class="page">
+
+        <div class="container">
+
+
+            <!-- =================================================
+                 TOP BAR
+            ================================================= -->
+
+            <header class="topbar">
+
+                <div class="left-top">
+
+                    <button
+                        id="mobileMenuBtn"
+                        class="menu-btn"
+                        type="button"
+                        aria-label="Open navigation"
+                    >
+                        ☰
+                    </button>
+
+
+                    <div class="brand">
+
+                        <div class="brand-logo">
+                            📚
+                        </div>
+
+
+                        <div class="brand-text">
+
+                            <h1>
+                                DueMate
+                            </h1>
+
+                            <p>
+                                Student Academic Space
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="top-actions">
+
+                    <button
+                        class="calendar-btn date-control"
+                        type="button"
+                        onclick="window.location.href='calendar.html'"
+                        aria-label="Open calendar"
+                    >
+                        📅
+
+                        <span class="calendar-date-label" id="profileCurrentDate">
+                            Today
+                        </span>
+                    </button>
+
+                    <button
+                        class="notification-btn"
+                        type="button"
+                        onclick="window.location.href='notifications.html'"
+                        aria-label="Open notifications"
+                    >
+                        🔔
+                        <span class="notification-dot"></span>
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================================
+                 PAGE HEADING
+            ================================================= -->
+
+            <section class="page-heading">
+
+                <h2>
+                    My Profile 👤
+                </h2>
+
+                <p>
+                    View and manage your personal DueMate profile information.
+                </p>
+
+            </section>
+
+
+            <!-- =================================================
+                 PROFILE HERO
+            ================================================= -->
+
+            <section class="profile-hero">
+
+                <div class="avatar-wrapper">
+
+                    <div
+                        class="avatar"
+                        id="avatar"
+                    >
+
+                        <img
+                            id="profileImage"
+                            alt="Profile photo"
+                        >
+
+
+                        <span
+                            class="avatar-letter"
+                            id="avatarLetter"
+                        >
+                            U
+                        </span>
+
+                    </div>
+
+
+                    <div class="online-dot"></div>
+
+                </div>
+
+
+                <div class="hero-info">
+
+                    <h3 id="profileName">
+                        Student
+                    </h3>
+
+
+                    <p
+                        class="hero-email"
+                        id="profileEmail"
+                    >
+                        student@example.com
+                    </p>
+
+
+                    <span class="student-badge">
+                        🎓 DueMate Student
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="edit-profile-btn"
+                    id="editProfileBtn"
+                >
+                    ✏️ Edit Profile
+                </button>
+
+            </section>
+
+
+            <!-- =================================================
+                 CONTENT
+            ================================================= -->
+
+            <div class="content-grid">
+
+
+                <!-- =================================================
+                     REGISTRATION INFORMATION
+                ================================================= -->
+
+                <section class="card">
+
+                    <div class="card-header">
+
+                        <div class="card-title">
+
+                            <div class="card-icon">
+                                👤
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    Your Information
+                                </h3>
+
+                                <p>
+                                    Registration details entered at signup
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-list">
+
+
+                        <!-- FULL NAME -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                👤
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Full Name
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="fullName"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- EMAIL -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                📧
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Email ID
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="emailAddress"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- MOBILE NUMBER -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                📱
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Mobile Number
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="mobileNumber"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- COLLEGE -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                🏫
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    College / Institution
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="collegeName"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- DEPARTMENT -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                💻
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Department
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="department"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- YEAR / SEMESTER -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                📖
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Year / Semester
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="semester"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     PROFILE ACTIONS
+                ================================================= -->
+
+                <section class="card">
+
+                    <div class="card-header">
+
+                        <div class="card-title">
+
+                            <div class="card-icon">
+                                🔐
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    Profile & Security
+                                </h3>
+
+                                <p>
+                                    Profile-related actions
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="action-list">
+
+
+                        <button
+                            type="button"
+                            class="action-btn"
+                            id="changePasswordBtn"
+                        >
+
+                            <div class="action-left">
+
+                                <div class="action-icon">
+                                    🔑
+                                </div>
+
+
+                                <div class="action-text">
+
+                                    <strong>
+                                        Change Password
+                                    </strong>
+
+                                    <span>
+                                        Update your account password
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                ›
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="action-btn"
+                            id="settingsShortcut"
+                        >
+
+                            <div class="action-left">
+
+                                <div class="action-icon">
+                                    ⚙️
+                                </div>
+
+
+                                <div class="action-text">
+
+                                    <strong>
+                                        Account Settings
+                                    </strong>
+
+                                    <span>
+                                        Open the separate Settings page
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                ›
+                            </span>
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- ACCOUNT STATUS -->
+
+                    <div class="status-card">
+
+                        <div class="status-header">
+
+                            <div class="status-icon">
+                                🛡️
+                            </div>
+
+
+                            <div>
+
+                                <h4>
+                                    Account Status
+                                </h4>
+
+                                <p>
+                                    Current account information
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="status-items">
+
+
+                            <div class="status-item">
+
+                                <strong>
+                                    ✓ Active
+                                </strong>
+
+                                Account status
+
+                            </div>
+
+
+                            <div class="status-item">
+
+                                <strong>
+                                    ✓ Logged In
+                                </strong>
+
+                                Current session
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     LOGOUT
+                ================================================= -->
+
+                <section class="card">
+
+                    <div class="card-header">
+
+                        <div class="card-title">
+
+                            <div class="card-icon">
+                                🚪
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    Account
+                                </h3>
+
+                                <p>
+                                    Manage your current session
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="danger-zone">
+
+                        <h4>
+                            Logout from DueMate
+                        </h4>
+
+
+                        <p>
+                            This will end your current DueMate session
+                            on this browser tab.
+                        </p>
+
+
+                        <button
+                            type="button"
+                            class="logout-btn"
+                            id="logoutBtn"
+                        >
+                            🚪 Logout
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         EDIT PROFILE MODAL
+    ========================================================= -->
+
+    <div
+        class="modal-overlay"
+        id="modalOverlay"
+    >
+
+        <div
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="editTitle"
+        >
+
+
+            <div class="modal-header">
+
+                <h3 id="editTitle">
+                    Edit Profile
+                </h3>
+
+
+                <button
+                    type="button"
+                    class="close-btn"
+                    id="closeModalBtn"
+                    aria-label="Close"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <!-- FULL NAME -->
+
+            <div class="edit-group">
+
+                <label
+                    class="edit-label"
+                    for="editName"
+                >
+                    Full Name
+                </label>
+
+
+                <input
+                    class="edit-input"
+                    id="editName"
+                    type="text"
+                    placeholder="Enter your full name"
+                >
+
+            </div>
+
+
+            <!-- MOBILE -->
+
+            <div class="edit-group">
+
+                <label
+                    class="edit-label"
+                    for="editMobile"
+                >
+                    Mobile Number
+                </label>
+
+
+                <input
+                    class="edit-input"
+                    id="editMobile"
+                    type="tel"
+                    placeholder="Enter your mobile number"
+                >
+
+            </div>
+
+
+            <!-- COLLEGE -->
+
+            <div class="edit-group">
+
+                <label
+                    class="edit-label"
+                    for="editCollege"
+                >
+                    College / Institution
+                </label>
+
+
+                <input
+                    class="edit-input"
+                    id="editCollege"
+                    type="text"
+                    placeholder="Enter your college"
+                >
+
+            </div>
+
+
+            <!-- DEPARTMENT -->
+
+            <div class="edit-group">
+
+                <label
+                    class="edit-label"
+                    for="editDepartment"
+                >
+                    Department
+                </label>
+
+
+                <input
+                    class="edit-input"
+                    id="editDepartment"
+                    type="text"
+                    placeholder="Information Technology"
+                >
+
+            </div>
+
+
+            <!-- YEAR / SEMESTER -->
+
+            <div class="edit-group">
+
+                <label
+                    class="edit-label"
+                    for="editSemester"
+                >
+                    Year / Semester
+                </label>
+
+
+                <input
+                    class="edit-input"
+                    id="editSemester"
+                    type="text"
+                    placeholder="Example: 2nd Year - Semester III"
+                >
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="modal-btn cancel-btn"
+                    id="cancelEditBtn"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="button"
+                    class="modal-btn save-btn"
+                    id="saveProfileBtn"
+                >
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         TOAST
+    ========================================================= -->
+
+    <div
+        class="toast"
+        id="toast"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================= -->
+
+    <script>
+
+
+        /* =========================================================
+           ELEMENTS
+        ========================================================= */
+
+
+        const dashboardBtn =
+            document.getElementById(
+                "dashboardBtn"
+            );
+
+
+        const settingsBtn =
+            document.getElementById(
+                "settingsBtn"
+            );
+
+
+        const settingsShortcut =
+            document.getElementById(
+                "settingsShortcut"
+            );
+
+
+        const editProfileBtn =
+            document.getElementById(
+                "editProfileBtn"
+            );
+
+
+        const changePasswordBtn =
+            document.getElementById(
+                "changePasswordBtn"
+            );
+
+
+        const logoutBtn =
+            document.getElementById(
+                "logoutBtn"
+            );
+
+
+        const modalOverlay =
+            document.getElementById(
+                "modalOverlay"
+            );
+
+
+        const closeModalBtn =
+            document.getElementById(
+                "closeModalBtn"
+            );
+
+
+        const cancelEditBtn =
+            document.getElementById(
+                "cancelEditBtn"
+            );
+
+
+        const saveProfileBtn =
+            document.getElementById(
+                "saveProfileBtn"
+            );
+
+
+        const toast =
+            document.getElementById(
+                "toast"
+            );
+
+
+        /* =========================================================
+           PROFILE ELEMENTS
+        ========================================================= */
+
+
+        const profileName =
+            document.getElementById(
+                "profileName"
+            );
+
+
+        const profileEmail =
+            document.getElementById(
+                "profileEmail"
+            );
+
+
+        const fullName =
+            document.getElementById(
+                "fullName"
+            );
+
+
+        const emailAddress =
+            document.getElementById(
+                "emailAddress"
+            );
+
+
+        const mobileNumber =
+            document.getElementById(
+                "mobileNumber"
+            );
+
+
+        const studentId =
+            document.getElementById(
+                "studentId"
+            );
+
+
+        const collegeName =
+            document.getElementById(
+                "collegeName"
+            );
+
+
+        const department =
+            document.getElementById(
+                "department"
+            );
+
+
+        const course =
+            document.getElementById(
+                "course"
+            );
+
+
+        const semester =
+            document.getElementById(
+                "semester"
+            );
+
+
+        const avatarLetter =
+            document.getElementById(
+                "avatarLetter"
+            );
+
+
+        /* =========================================================
+           EDIT ELEMENTS
+        ========================================================= */
+
+
+        const editName =
+            document.getElementById(
+                "editName"
+            );
+
+
+        const editMobile =
+            document.getElementById(
+                "editMobile"
+            );
+
+
+        const editCollege =
+            document.getElementById(
+                "editCollege"
+            );
+
+
+        const editDepartment =
+            document.getElementById(
+                "editDepartment"
+            );
+
+
+        const editSemester =
+            document.getElementById(
+                "editSemester"
+            );
+
+
+        /* =========================================================
+           GET LOGGED-IN USER
+        ========================================================= */
+
+
+        function normalizeEmail(value) {
+
+            return String(value || "")
+                .trim()
+                .toLowerCase();
+        }
+
+
+        function getLoggedInUser() {
+
+            const sessionKeys = [
+                "duemate-user",
+                "dueMateUser",
+                "loggedInUser",
+                "duemate-current-user",
+                "currentUser"
+            ];
+
+            for (const key of sessionKeys) {
+                const raw = sessionStorage.getItem(key);
+                if (!raw) continue;
+
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && (parsed.email || parsed.user_email || parsed.emailId || parsed.userEmail)) {
+                        return parsed;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+
+            const directEmail = sessionStorage.getItem("duemate-user-email") || sessionStorage.getItem("userEmail");
+            if (directEmail && !String(directEmail).trim().startsWith("{")) {
+                const email = normalizeEmail(directEmail);
+                return { email };
+            }
+
+            return null;
+        }
+
+
+        function getCurrentUserEmail() {
+
+            const user = getLoggedInUser();
+            if (!user) {
+                return "";
+            }
+
+            const direct = user.email || user.user_email || user.emailId || user.userEmail;
+            if (direct) {
+                return normalizeEmail(direct);
+            }
+
+            return "";
+        }
+
+
+        function persistUserSession(user, email) {
+
+            const userEmail = normalizeEmail(email || user?.email || user?.user_email || user?.emailId || user?.userEmail);
+            if (!userEmail) {
+                return;
+            }
+
+            const merged = {
+                ...(user || {}),
+                email: userEmail,
+                user_email: userEmail,
+                userEmail: userEmail
+            };
+
+            const userName = String(
+                merged.name ||
+                merged.fullName ||
+                merged.full_name ||
+                merged.username ||
+                ""
+            ).trim();
+
+            sessionStorage.setItem("duemate-user", JSON.stringify(merged));
+            sessionStorage.setItem("dueMateUser", JSON.stringify(merged));
+            sessionStorage.setItem("loggedInUser", JSON.stringify(merged));
+            sessionStorage.setItem("duemate-user-email", userEmail);
+            sessionStorage.setItem("userEmail", userEmail);
+            if (userName) {
+                sessionStorage.setItem("duemate-user-name", userName);
+            }
+        }
+
+
+        /* =========================================================
+           REDIRECT IF NOT LOGGED IN
+        ========================================================= */
+
+
+        function ensureAuthenticated() {
+
+            const userEmail = getCurrentUserEmail();
+
+            if (!userEmail) {
+                window.location.replace("index.html?redirect=profile");
+                return false;
+            }
+
+            return true;
+        }
+
+
+        if (!ensureAuthenticated()) {
+            throw new Error("Profile access requires login.");
+        }
+
+
+        /* =========================================================
+           SAFE VALUE
+        ========================================================= */
+
+
+        function getValue(object, keys, fallback = "Not available") {
+
+            for (const key of keys) {
+                if (object && object[key] !== undefined && object[key] !== null && String(object[key]).trim() !== "") {
+                    return String(object[key]).trim();
+                }
+            }
+
+            return fallback;
+        }
+
+
+        /* =========================================================
+           INITIAL PROFILE DATA
+        ========================================================= */
+
+
+        function getProfileData() {
+
+            const user = getLoggedInUser();
+            if (!user) {
+                return null;
+            }
+
+            const name = getValue(user, ["name", "fullName", "fullname", "username"], "Student");
+            const email = getValue(user, ["email", "emailId", "emailID", "user_email", "userEmail"], "Not available");
+            const mobile = getValue(user, ["mobile", "mobileNumber", "phone", "phoneNumber"], "Not available");
+            const studentId = getValue(user, ["studentId", "studentID", "rollNumber", "registerNumber"], "Not available");
+            const college = getValue(user, ["college", "collegeName", "institution"], "Not available");
+            const department = getValue(user, ["department", "dept"], "Information Technology");
+            const course = getValue(user, ["course", "program", "degree"], "B.Tech");
+            const year = getValue(user, ["year", "semester", "yearSemester"], "Not available");
+
+            return {
+                name,
+                email,
+                mobile,
+                studentId,
+                college,
+                department,
+                course,
+                semester: year,
+                year
+            };
+        }
+
+
+        /* =========================================================
+           FIRST LETTER
+        ========================================================= */
+
+
+        function getInitial(name) {
+
+            if (!name || name === "Student") {
+                return "U";
+            }
+
+            return name.trim().charAt(0).toUpperCase();
+        }
+
+
+        async function loadProfileFromServer() {
+
+            const userEmail = getCurrentUserEmail();
+            if (!userEmail) {
+                ensureAuthenticated();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${"http://localhost:5000"}/api/user/profile?email=${encodeURIComponent(userEmail)}`);
+                const raw = await response.text();
+                let data = {};
+
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (error) {
+                    console.error("Profile response parsing failed:", error);
+                    data = {};
+                }
+
+                if (!response.ok || !data.success || !data.user) {
+                    throw new Error(data.message || "Unable to load profile.");
+                }
+
+                const serverUser = data.user;
+                const merged = {
+                    ...getLoggedInUser(),
+                    ...serverUser,
+                    email: normalizeEmail(serverUser.email || userEmail),
+                    user_email: normalizeEmail(serverUser.email || userEmail),
+                    userEmail: normalizeEmail(serverUser.email || userEmail)
+                };
+
+                persistUserSession(merged, merged.email);
+                displayProfile();
+            } catch (error) {
+                console.error("Profile load error:", error);
+                showToast(error.message || "Unable to load profile data.");
+            }
+        }
+
+
+        /* =========================================================
+           DISPLAY PROFILE
+        ========================================================= */
+
+
+        function displayProfile() {
+
+            const data = getProfileData();
+            if (!data) {
+                return;
+            }
+
+            profileName.textContent = data.name;
+            profileEmail.textContent = data.email;
+            fullName.textContent = data.name;
+            emailAddress.textContent = data.email;
+            mobileNumber.textContent = data.mobile;
+            collegeName.textContent = data.college;
+            department.textContent = data.department;
+            semester.textContent = data.year;
+            avatarLetter.textContent = getInitial(data.name);
+        }
+
+
+        /* =========================================================
+           APPLY SAVED THEME
+        ========================================================= */
+
+
+        function applySavedTheme() {
+
+            const email = getCurrentUserEmail();
+            const userTheme = email ? localStorage.getItem("duemate-theme-" + encodeURIComponent(email)) : null;
+            const savedTheme = userTheme || localStorage.getItem("duemate-theme") || "light";
+            const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+            document.body.classList.toggle("dark", savedTheme === "dark" || (savedTheme === "system" && systemDark));
+        }
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+
+        let toastTimer;
+
+
+        function showToast(message) {
+
+            clearTimeout(
+                toastTimer
+            );
+
+
+            toast.textContent =
+                message;
+
+
+            toast.classList.add(
+                "show"
+            );
+
+
+            toastTimer =
+                setTimeout(
+                    function () {
+
+                        toast.classList.remove(
+                            "show"
+                        );
+
+                    },
+                    2800
+                );
+        }
+
+
+        /* =========================================================
+           OPEN EDIT MODAL
+        ========================================================= */
+
+
+        function openEditModal() {
+
+            const data = getProfileData();
+            if (!data) {
+                return;
+            }
+
+            editName.value = data.name === "Not available" ? "" : data.name;
+            editMobile.value = data.mobile === "Not available" ? "" : data.mobile;
+            editCollege.value = data.college === "Not available" ? "" : data.college;
+            editDepartment.value = data.department === "Information Technology" ? "" : data.department;
+            editSemester.value = data.year === "Not available" || !["1", "2", "3", "4"].includes(String(data.year).trim()) ? "" : String(data.year).trim();
+
+            modalOverlay.classList.add("show");
+            setTimeout(function () {
+                editName.focus();
+            }, 100);
+        }
+
+
+        /* =========================================================
+           CLOSE EDIT MODAL
+        ========================================================= */
+
+
+        function closeEditModal() {
+
+            modalOverlay.classList.remove(
+                "show"
+            );
+        }
+
+
+        /* =========================================================
+           SAVE PROFILE
+        ========================================================= */
+
+
+        async function saveProfile() {
+
+            const user = getLoggedInUser();
+            const userEmail = getCurrentUserEmail();
+
+            if (!user || !userEmail) {
+                showToast("Please login again.");
+                return;
+            }
+
+            const newName = editName.value.trim();
+            if (!newName) {
+                showToast("Please enter your full name.");
+                editName.focus();
+                return;
+            }
+
+            const mobileValue = editMobile.value.trim();
+            const collegeValue = editCollege.value.trim();
+            const departmentValue = editDepartment.value.trim();
+            const yearValue = editSemester.value.trim();
+
+            if (mobileValue && !/^\d{10}$/.test(mobileValue)) {
+                showToast("Please enter a valid 10-digit mobile number.");
+                editMobile.focus();
+                return;
+            }
+
+            if (yearValue && !["1", "2", "3", "4"].includes(yearValue)) {
+                showToast("Please select a valid year.");
+                editSemester.focus();
+                return;
+            }
+
+            saveProfileBtn.disabled = true;
+            saveProfileBtn.textContent = "Saving...";
+
+            try {
+                const response = await fetch(`${"http://localhost:5000"}/api/user/profile`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        name: newName,
+                        mobile: mobileValue,
+                        college: collegeValue,
+                        department: departmentValue,
+                        year: yearValue
+                    })
+                });
+
+                const raw = await response.text();
+                let data = {};
+
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (error) {
+                    console.error("Profile update parse error:", error);
+                    data = {};
+                }
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Unable to save profile.");
+                }
+
+                const updatedUser = {
+                    ...(user || {}),
+                    ...data.user,
+                    email: userEmail,
+                    user_email: userEmail,
+                    userEmail: userEmail,
+                    name: newName,
+                    fullName: newName,
+                    mobile: mobileValue,
+                    mobileNumber: mobileValue,
+                    college: collegeValue,
+                    collegeName: collegeValue,
+                    department: departmentValue || user.department || "Information Technology",
+                    year: yearValue || user.year || "",
+                    semester: yearValue || user.semester || user.year || ""
+                };
+
+                sessionStorage.setItem("duemate-user-name", newName);
+                persistUserSession(updatedUser, userEmail);
+                displayProfile();
+                closeEditModal();
+                showToast("Profile updated successfully! ✓");
+            } catch (error) {
+                console.error("Profile save error:", error);
+                showToast(error.message || "Unable to save profile right now.");
+            } finally {
+                saveProfileBtn.disabled = false;
+                saveProfileBtn.textContent = "Save Changes";
+            }
+        }
+
+
+        /* =========================================================
+           DASHBOARD NAVIGATION
+        ========================================================= */
+
+
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener(
+                "click",
+                function () {
+
+                    window.location.href =
+                        "dashboard.html";
+
+                }
+            );
+        }
+
+
+        /* =========================================================
+           SETTINGS NAVIGATION
+
+           Actual file:
+           settings.html
+        ========================================================= */
+
+
+        if (settingsBtn) {
+            settingsBtn.addEventListener(
+                "click",
+                function () {
+
+                    window.location.href =
+                        "settings.html";
+
+                }
+            );
+        }
+
+
+        if (settingsShortcut) {
+            settingsShortcut.addEventListener(
+                "click",
+                function () {
+
+                    window.location.href =
+                        "settings.html";
+
+                }
+            );
+        }
+
+
+        /* =========================================================
+           EDIT PROFILE
+        ========================================================= */
+
+
+        editProfileBtn.addEventListener(
+            "click",
+            openEditModal
+        );
+
+
+        /* =========================================================
+           CLOSE MODAL
+        ========================================================= */
+
+
+        closeModalBtn.addEventListener(
+            "click",
+            closeEditModal
+        );
+
+
+        cancelEditBtn.addEventListener(
+            "click",
+            closeEditModal
+        );
+
+
+        /* =========================================================
+           CLICK OUTSIDE MODAL
+        ========================================================= */
+
+
+        modalOverlay.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target ===
+                    modalOverlay
+                ) {
+
+                    closeEditModal();
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           SAVE PROFILE
+        ========================================================= */
+
+
+        saveProfileBtn.addEventListener(
+            "click",
+            saveProfile
+        );
+
+
+        /* =========================================================
+           ESCAPE KEY
+        ========================================================= */
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape" &&
+                    modalOverlay.classList.contains(
+                        "show"
+                    )
+                ) {
+
+                    closeEditModal();
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           CHANGE PASSWORD
+
+           Goes to existing forgot-password.html
+        ========================================================= */
+
+
+        changePasswordBtn.addEventListener(
+            "click",
+            function () {
+
+                window.location.href =
+                    "forgot-password.html";
+
+            }
+        );
+
+
+        /* =========================================================
+           LOGOUT
+        ========================================================= */
+
+
+        logoutBtn.addEventListener(
+            "click",
+            function () {
+
+                const confirmLogout =
+                    window.confirm(
+                        "Are you sure you want to logout from DueMate?"
+                    );
+
+
+                if (!confirmLogout) {
+
+                    return;
+                }
+
+                sessionStorage.removeItem("duemate-user");
+                sessionStorage.removeItem("dueMateUser");
+                sessionStorage.removeItem("loggedInUser");
+                sessionStorage.removeItem("duemate-current-user");
+                sessionStorage.removeItem("duemate-user-email");
+                sessionStorage.removeItem("userEmail");
+                localStorage.removeItem("duemate-remembered-email");
+
+                window.location.replace("index.html");
+
+            }
+        );
+
+
+        /* =========================================================
+           INITIALIZATION
+        ========================================================= */
+
+
+        applySavedTheme();
+        loadProfileFromServer();
+        displayProfile();
+
+    </script>
+
+    <script src="app-shell.js"></script>
+</body>
+
+</html>

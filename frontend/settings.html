@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="DueMate - Application Settings">
+
+    <title>DueMate - Settings</title>
+
+    <style>
+        /* =========================================================
+           DUE MATE - SETTINGS
+           SETTINGS PAGE ONLY
+           Profile is handled separately by profile.html
+        ========================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+
+            --bg: #f5f6ff;
+
+            --surface: rgba(255,255,255,0.78);
+            --surface-solid: #ffffff;
+            --surface-soft: rgba(255,255,255,0.55);
+
+            --text: #25263a;
+            --muted: #777b91;
+
+            --border: rgba(255,255,255,0.90);
+
+            --input: rgba(255,255,255,0.72);
+
+            --purple: #756cff;
+            --blue: #5d9cff;
+            --pink: #ff86b6;
+            --mint: #55d5b0;
+            --yellow: #ffd76b;
+            --danger: #ff647f;
+
+            --shadow: rgba(60,66,120,0.16);
+
+            --grid: rgba(91,99,150,0.055);
+        }
+
+        body.dark {
+
+            --bg: #0b1020;
+
+            --surface: rgba(20,26,49,0.78);
+            --surface-solid: #151b32;
+            --surface-soft: rgba(28,35,62,0.58);
+
+            --text: #f4f5ff;
+            --muted: #aeb3ca;
+
+            --border: rgba(255,255,255,0.09);
+
+            --input: rgba(255,255,255,0.055);
+
+            --purple: #958cff;
+            --blue: #73adff;
+            --pink: #ff91bf;
+            --mint: #64dfc0;
+            --yellow: #ffe08a;
+            --danger: #ff8298;
+
+            --shadow: rgba(0,0,0,0.45);
+
+            --grid: rgba(185,195,255,0.035);
+        }
+
+        body {
+
+            min-height: 100vh;
+
+            font-family:
+                "Segoe UI",
+                Inter,
+                Arial,
+                sans-serif;
+
+            color: var(--text);
+
+            background: var(--bg);
+
+            overflow-x: hidden;
+
+            transition:
+                background 0.4s ease,
+                color 0.4s ease;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+
+        /* =========================================================
+           BACKGROUND
+        ========================================================= */
+
+        .background {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: -10;
+
+            overflow: hidden;
+
+            background: var(--bg);
+        }
+
+        .background::before {
+
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            background:
+
+                radial-gradient(
+                    circle at 15% 15%,
+                    rgba(117,108,255,0.12),
+                    transparent 30%
+                ),
+
+                radial-gradient(
+                    circle at 85% 30%,
+                    rgba(85,213,176,0.09),
+                    transparent 28%
+                ),
+
+                radial-gradient(
+                    circle at 50% 95%,
+                    rgba(255,134,182,0.08),
+                    transparent 30%
+                );
+        }
+
+        .grid {
+
+            position: absolute;
+
+            inset: -100px;
+
+            background-image:
+
+                linear-gradient(
+                    var(--grid) 1px,
+                    transparent 1px
+                ),
+
+                linear-gradient(
+                    90deg,
+                    var(--grid) 1px,
+                    transparent 1px
+                );
+
+            background-size: 44px 44px;
+
+            transform:
+                perspective(500px)
+                rotateX(55deg)
+                scale(1.4);
+
+            transform-origin:
+                center bottom;
+
+            opacity: 0.9;
+        }
+
+        .glow {
+
+            position: absolute;
+
+            border-radius: 50%;
+
+            filter: blur(90px);
+
+            pointer-events: none;
+
+            opacity: 0.25;
+        }
+
+        .glow-one {
+
+            width: 400px;
+            height: 400px;
+
+            left: -170px;
+            top: -150px;
+
+            background: var(--purple);
+
+            animation:
+                glowOne 18s ease-in-out infinite alternate;
+        }
+
+        .glow-two {
+
+            width: 380px;
+            height: 380px;
+
+            right: -150px;
+            top: 35%;
+
+            background: var(--mint);
+
+            animation:
+                glowTwo 22s ease-in-out infinite alternate;
+        }
+
+        @keyframes glowOne {
+
+            from {
+                transform: translate(0,0);
+            }
+
+            to {
+                transform: translate(220px,200px);
+            }
+        }
+
+        @keyframes glowTwo {
+
+            from {
+                transform: translate(0,0);
+            }
+
+            to {
+                transform: translate(-200px,120px);
+            }
+        }
+
+
+        /* =========================================================
+           PAGE
+        ========================================================= */
+
+        .page {
+
+            width: min(1100px, 94%);
+
+            margin: 0 auto;
+
+            padding:
+                25px 0 50px;
+        }
+
+
+        /* =========================================================
+           TOP BAR
+        ========================================================= */
+
+        .topbar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+        }
+
+        .left-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar .menu-btn,
+        .topbar .calendar-btn,
+        .topbar .notification-btn {
+            width: 45px;
+            height: 45px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 20px;
+            box-shadow: 0 12px 30px var(--shadow);
+            backdrop-filter: blur(15px);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .topbar .calendar-btn {
+            width: auto;
+            min-width: 132px;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .topbar .calendar-date-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .topbar .notification-btn {
+            position: relative;
+        }
+
+        .topbar .menu-btn:hover,
+        .topbar .calendar-btn:hover,
+        .topbar .notification-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(117,108,255,0.08);
+        }
+
+        .brand-area {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 13px;
+        }
+
+        .logo {
+
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            color: white;
+
+            font-size: 22px;
+
+            box-shadow:
+                0 12px 30px
+                rgba(117,108,255,0.25);
+        }
+
+        .brand-text h1 {
+
+            font-size: 21px;
+
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text p {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            margin-top: 2px;
+        }
+
+
+        /* =========================================================
+           NAVIGATION
+        ========================================================= */
+
+        .nav-buttons {
+
+            display: flex;
+
+            gap: 8px;
+
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+
+            border: 1px solid var(--border);
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            padding:
+                9px 13px;
+
+            border-radius: 11px;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            backdrop-filter: blur(15px);
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .nav-btn:hover {
+
+            transform: translateY(-2px);
+
+            background:
+                rgba(117,108,255,0.10);
+        }
+
+        .nav-btn.active {
+
+            color: white;
+
+            border-color: transparent;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+        }
+
+
+        /* =========================================================
+           PAGE HEADER
+        ========================================================= */
+
+        .page-header {
+
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+
+            font-size:
+                clamp(30px,5vw,42px);
+
+            letter-spacing:
+                -1.5px;
+
+            margin-bottom: 7px;
+        }
+
+        .page-header h2 span {
+
+            color: var(--purple);
+        }
+
+        .page-header p {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            line-height: 1.6;
+        }
+
+
+        /* =========================================================
+           SETTINGS LAYOUT
+        ========================================================= */
+
+        .settings-layout {
+
+            display: grid;
+
+            grid-template-columns:
+                230px 1fr;
+
+            gap: 20px;
+
+            align-items: start;
+        }
+
+
+        /* =========================================================
+           SETTINGS MENU
+        ========================================================= */
+
+        .settings-menu {
+
+            position: sticky;
+
+            top: 20px;
+
+            padding: 12px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 20px;
+
+            background:
+                var(--surface);
+
+            box-shadow:
+                0 20px 50px var(--shadow);
+
+            backdrop-filter:
+                blur(20px);
+        }
+
+        .menu-title {
+
+            padding:
+                10px 11px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            text-transform:
+                uppercase;
+
+            letter-spacing:
+                0.8px;
+        }
+
+        .menu-btn {
+
+            width: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding:
+                11px;
+
+            margin-bottom: 4px;
+
+            border: 0;
+
+            border-radius: 11px;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            text-align: left;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .menu-btn:hover {
+
+            background:
+                rgba(117,108,255,0.08);
+
+            color: var(--text);
+        }
+
+        .menu-btn.active {
+
+            background:
+                rgba(117,108,255,0.12);
+
+            color: var(--purple);
+        }
+
+        .menu-icon {
+
+            width: 25px;
+
+            text-align: center;
+
+            font-size: 16px;
+        }
+
+
+        /* =========================================================
+           SETTINGS CONTENT
+        ========================================================= */
+
+        .settings-content {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 18px;
+        }
+
+        .settings-card {
+
+            padding: 23px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 21px;
+
+            background:
+                var(--surface);
+
+            box-shadow:
+                0 20px 50px var(--shadow);
+
+            backdrop-filter:
+                blur(20px);
+        }
+
+        .settings-card h3 {
+
+            font-size: 18px;
+
+            margin-bottom: 5px;
+        }
+
+        .settings-card-description {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            line-height: 1.5;
+
+            margin-bottom: 18px;
+        }
+
+
+        /* =========================================================
+           SETTING ROW
+        ========================================================= */
+
+        .setting-row {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            padding:
+                15px 0;
+
+            border-bottom:
+                1px solid
+                rgba(120,125,160,0.12);
+        }
+
+        .setting-row:first-of-type {
+
+            padding-top: 0;
+        }
+
+        .setting-row:last-child {
+
+            border-bottom: 0;
+
+            padding-bottom: 0;
+        }
+
+        .setting-info {
+
+            flex: 1;
+        }
+
+        .setting-info strong {
+
+            display: block;
+
+            font-size: 13px;
+
+            margin-bottom: 4px;
+        }
+
+        .setting-info span {
+
+            display: block;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            line-height: 1.5;
+        }
+
+
+        /* =========================================================
+           TOGGLE
+        ========================================================= */
+
+        .toggle {
+
+            position: relative;
+
+            flex-shrink: 0;
+
+            width: 48px;
+
+            height: 27px;
+        }
+
+        .toggle input {
+
+            opacity: 0;
+
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+
+            position: absolute;
+
+            inset: 0;
+
+            border-radius: 30px;
+
+            background:
+                rgba(120,125,160,0.25);
+
+            transition:
+                0.25s ease;
+        }
+
+        .slider::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 21px;
+            height: 21px;
+
+            left: 3px;
+            top: 3px;
+
+            border-radius: 50%;
+
+            background: white;
+
+            box-shadow:
+                0 2px 7px
+                rgba(0,0,0,0.18);
+
+            transition:
+                0.25s ease;
+        }
+
+        .toggle input:checked + .slider {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+        }
+
+        .toggle input:checked + .slider::before {
+
+            transform:
+                translateX(21px);
+        }
+
+
+        /* =========================================================
+           SELECT
+        ========================================================= */
+
+        .setting-select {
+
+            min-width: 145px;
+
+            padding:
+                9px 12px;
+
+            border:
+                1px solid
+                rgba(120,125,160,0.18);
+
+            border-radius: 10px;
+
+            outline: none;
+
+            background:
+                var(--input);
+
+            color:
+                var(--text);
+
+            font-size: 11px;
+
+            cursor: pointer;
+        }
+
+        .setting-select:focus {
+
+            border-color:
+                var(--purple);
+
+            box-shadow:
+                0 0 0 3px
+                rgba(117,108,255,0.10);
+        }
+
+
+        /* =========================================================
+           THEME OPTIONS
+        ========================================================= */
+
+        .theme-options {
+
+            display: flex;
+
+            gap: 10px;
+
+            flex-wrap: wrap;
+        }
+
+        .theme-option {
+
+            flex: 1;
+
+            min-width: 110px;
+
+            padding: 13px;
+
+            border:
+                1px solid
+                rgba(120,125,160,0.18);
+
+            border-radius: 13px;
+
+            background:
+                var(--input);
+
+            color: var(--text);
+
+            text-align: center;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                border 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .theme-option:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+        .theme-option.selected {
+
+            border-color:
+                var(--purple);
+
+            background:
+                rgba(117,108,255,0.10);
+        }
+
+        .theme-preview {
+
+            height: 45px;
+
+            border-radius: 9px;
+
+            margin-bottom: 8px;
+        }
+
+        .light-preview {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f5f6ff,
+                    #ffffff
+                );
+
+            border:
+                1px solid #dddff0;
+        }
+
+        .dark-preview {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0b1020,
+                    #202849
+                );
+        }
+
+        .system-preview {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #f5f6ff 50%,
+                    #151b32 50%
+                );
+        }
+
+        .theme-option strong {
+
+            font-size: 11px;
+        }
+
+
+        /* =========================================================
+           DANGER ZONE
+        ========================================================= */
+
+        .danger-card {
+
+            border-color:
+                rgba(255,100,127,0.22);
+        }
+
+        .danger-card h3 {
+
+            color: var(--danger);
+        }
+
+        .danger-button {
+
+            border: 0;
+
+            padding:
+                10px 15px;
+
+            border-radius: 11px;
+
+            background:
+                rgba(255,100,127,0.10);
+
+            color:
+                var(--danger);
+
+            font-size: 11px;
+
+            font-weight: 800;
+        }
+
+        .danger-button:hover {
+
+            background:
+                rgba(255,100,127,0.17);
+        }
+
+
+        /* =========================================================
+           SAVE BUTTON
+        ========================================================= */
+
+        .save-area {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 10px;
+
+            margin-top: 4px;
+        }
+
+        .save-button {
+
+            border: 0;
+
+            padding:
+                12px 22px;
+
+            border-radius: 12px;
+
+            color: white;
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            box-shadow:
+                0 12px 25px
+                rgba(117,108,255,0.22);
+
+            transition:
+                transform 0.2s ease;
+        }
+
+        .save-button:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+        .toast {
+
+            position: fixed;
+
+            left: 50%;
+
+            bottom: 25px;
+
+            transform:
+                translate(-50%,120px);
+
+            min-width:
+                min(340px,90%);
+
+            padding:
+                13px 17px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 13px;
+
+            background:
+                var(--surface-solid);
+
+            color:
+                var(--text);
+
+            box-shadow:
+                0 18px 45px var(--shadow);
+
+            text-align: center;
+
+            font-size: 12px;
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition:
+                transform 0.3s ease,
+                opacity 0.3s ease;
+
+            z-index: 1000;
+        }
+
+        .toast.show {
+
+            transform:
+                translate(-50%,0);
+
+            opacity: 1;
+        }
+
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 800px) {
+
+            .settings-layout {
+
+                grid-template-columns: 1fr;
+            }
+
+            .settings-menu {
+
+                position: static;
+
+                display: flex;
+
+                overflow-x: auto;
+
+                gap: 5px;
+            }
+
+            .menu-title {
+
+                display: none;
+            }
+
+            .menu-btn {
+
+                min-width: 125px;
+
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 550px) {
+
+            .page {
+
+                width: 92%;
+
+                padding-top: 18px;
+            }
+
+            .topbar {
+
+                align-items: flex-start;
+
+                flex-direction: column;
+            }
+
+            .nav-buttons {
+
+                width: 100%;
+            }
+
+            .nav-btn {
+
+                flex: 1;
+
+                text-align: center;
+            }
+
+            .settings-card {
+
+                padding: 18px;
+            }
+
+            .setting-row {
+
+                align-items: flex-start;
+
+                flex-direction: column;
+            }
+
+            .setting-select {
+
+                width: 100%;
+            }
+
+            .toggle {
+
+                align-self: flex-end;
+            }
+
+            .save-area {
+
+                width: 100%;
+            }
+
+            .save-button {
+
+                width: 100%;
+            }
+        }
+
+    </style>
+    <link rel="stylesheet" href="app-shell.css">
+</head>
+
+
+<body>
+
+    <!-- =========================================================
+         BACKGROUND
+    ========================================================= -->
+
+    <div class="background">
+
+        <div class="grid"></div>
+
+        <div class="glow glow-one"></div>
+
+        <div class="glow glow-two"></div>
+
+    </div>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================= -->
+
+    <main class="page">
+
+
+        <!-- =====================================================
+             TOP BAR
+        ===================================================== -->
+
+        <header class="topbar">
+
+            <div class="left-top">
+
+                <button
+                    id="mobileMenuBtn"
+                    class="menu-btn"
+                    type="button"
+                    aria-label="Open navigation"
+                >
+                    ☰
+                </button>
+
+
+                <div class="brand">
+
+                    <div class="brand-logo">
+                        📚
+                    </div>
+
+
+                    <div class="brand-text">
+
+                        <h1>DueMate</h1>
+
+                        <p>
+                            Academic Management Platform
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <button
+                    class="calendar-btn date-control"
+                    type="button"
+                    onclick="window.location.href='calendar.html'"
+                    aria-label="Open calendar"
+                >
+                    📅
+
+                    <span class="calendar-date-label" id="settingsCurrentDate">
+                        Today
+                    </span>
+                </button>
+
+                <button
+                    class="notification-btn"
+                    type="button"
+                    onclick="window.location.href='notifications.html'"
+                    aria-label="Open notifications"
+                >
+                    🔔
+                    <span class="notification-dot"></span>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             PAGE HEADER
+        ===================================================== -->
+
+        <section class="page-header">
+
+            <h2>
+                Application <span>Settings</span> ⚙️
+            </h2>
+
+            <p>
+                Customize your DueMate experience,
+                notifications, appearance and preferences.
+            </p>
+
+        </section>
+
+
+        <!-- =====================================================
+             SETTINGS LAYOUT
+        ===================================================== -->
+
+        <div class="settings-layout">
+
+
+            <!-- =================================================
+                 SETTINGS MENU
+            ================================================= -->
+
+            <aside class="settings-menu">
+
+                <div class="menu-title">
+                    Settings
+                </div>
+
+                <button
+                    class="menu-btn active"
+                    type="button"
+                    onclick="showSection('general', this)"
+                >
+
+                    <span class="menu-icon">
+                        ⚙️
+                    </span>
+
+                    General
+
+                </button>
+
+
+                <button
+                    class="menu-btn"
+                    type="button"
+                    onclick="showSection('appearance', this)"
+                >
+
+                    <span class="menu-icon">
+                        🎨
+                    </span>
+
+                    Appearance
+
+                </button>
+
+
+                <button
+                    class="menu-btn"
+                    type="button"
+                    onclick="showSection('notifications', this)"
+                >
+
+                    <span class="menu-icon">
+                        🔔
+                    </span>
+
+                    Notifications
+
+                </button>
+
+
+                <button
+                    class="menu-btn"
+                    type="button"
+                    onclick="showSection('privacy', this)"
+                >
+
+                    <span class="menu-icon">
+                        🔐
+                    </span>
+
+                    Privacy
+
+                </button>
+
+
+                <button
+                    class="menu-btn"
+                    type="button"
+                    onclick="showSection('security', this)"
+                >
+
+                    <span class="menu-icon">
+                        🛡️
+                    </span>
+
+                    Security
+
+                </button>
+
+            </aside>
+
+
+            <!-- =================================================
+                 CONTENT
+            ================================================= -->
+
+            <section class="settings-content">
+
+
+                <!-- =================================================
+                     GENERAL
+                ================================================= -->
+
+                <div
+                    class="settings-card settings-section"
+                    id="general"
+                >
+
+                    <h3>
+                        General Settings
+                    </h3>
+
+                    <p class="settings-card-description">
+                        Manage your basic DueMate preferences.
+                    </p>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Language
+                            </strong>
+
+                            <span>
+                                Select the language used
+                                throughout DueMate.
+                            </span>
+
+                        </div>
+
+                        <select
+                            class="setting-select"
+                            id="languageSelect"
+                        >
+
+                            <option value="English">
+                                English
+                            </option>
+
+                            <option value="Tamil">
+                                Tamil
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Start Page
+                            </strong>
+
+                            <span>
+                                Choose which page opens
+                                after login.
+                            </span>
+
+                        </div>
+
+                        <select
+                            class="setting-select"
+                            id="startPageSelect"
+                        >
+
+                            <option value="dashboard.html">
+                                Dashboard
+                            </option>
+
+                            <option value="tasks.html">
+                                Tasks
+                            </option>
+
+                            <option value="calendar.html">
+                                Calendar
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Compact Interface
+                            </strong>
+
+                            <span>
+                                Use a more compact layout
+                                for smaller screens.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="compactToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     APPEARANCE
+                ================================================= -->
+
+                <div
+                    class="settings-card settings-section"
+                    id="appearance"
+                    style="display:none;"
+                >
+
+                    <h3>
+                        Appearance
+                    </h3>
+
+                    <p class="settings-card-description">
+                        Choose how DueMate looks on your device.
+                    </p>
+
+
+                    <div class="theme-options">
+
+
+                        <div
+                            class="theme-option"
+                            id="lightTheme"
+                            onclick="selectTheme('light')"
+                        >
+
+                            <div class="theme-preview light-preview">
+                            </div>
+
+                            <strong>
+                                ☀️ Light
+                            </strong>
+
+                        </div>
+
+
+                        <div
+                            class="theme-option"
+                            id="darkTheme"
+                            onclick="selectTheme('dark')"
+                        >
+
+                            <div class="theme-preview dark-preview">
+                            </div>
+
+                            <strong>
+                                🌙 Dark
+                            </strong>
+
+                        </div>
+
+
+                        <div
+                            class="theme-option"
+                            id="systemTheme"
+                            onclick="selectTheme('system')"
+                        >
+
+                            <div class="theme-preview system-preview">
+                            </div>
+
+                            <strong>
+                                💻 System
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     NOTIFICATIONS
+                ================================================= -->
+
+                <div
+                    class="settings-card settings-section"
+                    id="notifications"
+                    style="display:none;"
+                >
+
+                    <h3>
+                        Notifications
+                    </h3>
+
+                    <p class="settings-card-description">
+                        Control reminders and DueMate alerts.
+                    </p>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Task Reminders
+                            </strong>
+
+                            <span>
+                                Receive reminders for upcoming
+                                tasks and deadlines.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="taskReminderToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Deadline Alerts
+                            </strong>
+
+                            <span>
+                                Get alerts when a deadline
+                                is approaching.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="deadlineToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Group Notifications
+                            </strong>
+
+                            <span>
+                                Receive updates from your
+                                academic groups.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="groupNotificationToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Daily Summary
+                            </strong>
+
+                            <span>
+                                Receive a daily summary of
+                                your academic activities.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="dailySummaryToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PRIVACY
+                ================================================= -->
+
+                <div
+                    class="settings-card settings-section"
+                    id="privacy"
+                    style="display:none;"
+                >
+
+                    <h3>
+                        Privacy
+                    </h3>
+
+                    <p class="settings-card-description">
+                        Control how your academic information
+                        is displayed.
+                    </p>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Profile Visibility
+                            </strong>
+
+                            <span>
+                                Choose who can see your
+                                profile information.
+                            </span>
+
+                        </div>
+
+                        <select
+                            class="setting-select"
+                            id="profileVisibility"
+                        >
+
+                            <option value="private">
+                                Private
+                            </option>
+
+                            <option value="groups">
+                                Groups Only
+                            </option>
+
+                            <option value="public">
+                                Public
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Activity Visibility
+                            </strong>
+
+                            <span>
+                                Allow group members to see
+                                your academic activity.
+                            </span>
+
+                        </div>
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                id="activityToggle"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SECURITY
+                ================================================= -->
+
+                <div
+                    class="settings-card settings-section"
+                    id="security"
+                    style="display:none;"
+                >
+
+                    <h3>
+                        Security
+                    </h3>
+
+                    <p class="settings-card-description">
+                        Manage your DueMate account security.
+                    </p>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Login Session
+                            </strong>
+
+                            <span>
+                                Your current DueMate session
+                                is stored securely for this tab.
+                            </span>
+
+                        </div>
+
+                        <button
+                            class="danger-button"
+                            type="button"
+                            onclick="logout()"
+                        >
+                            Logout
+                        </button>
+
+                    </div>
+
+
+                    <div class="setting-row">
+
+                        <div class="setting-info">
+
+                            <strong>
+                                Clear Local Preferences
+                            </strong>
+
+                            <span>
+                                Remove saved appearance and
+                                settings preferences from this browser.
+                            </span>
+
+                        </div>
+
+                        <button
+                            class="danger-button"
+                            type="button"
+                            onclick="clearPreferences()"
+                        >
+                            Clear
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SAVE
+                ================================================= -->
+
+                <div class="save-area">
+
+                    <button
+                        class="save-button"
+                        type="button"
+                        onclick="saveSettings()"
+                    >
+                        💾 Save Settings
+                    </button>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         TOAST
+    ========================================================= -->
+
+    <div
+        class="toast"
+        id="toast"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================= -->
+
+    <script>
+
+        /* =========================================================
+           AUTHENTICATION CHECK
+
+           IMPORTANT:
+           Login page stores:
+
+           sessionStorage.setItem(
+               "duemate-user",
+               JSON.stringify(data.user)
+           );
+
+           Therefore Settings uses THE SAME KEY.
+        ========================================================= */
+
+        function getSessionUser() {
+
+            const keys = [
+                "duemate-user",
+                "dueMateUser",
+                "loggedInUser",
+                "duemate-current-user",
+                "currentUser"
+            ];
+
+            for (const key of keys) {
+                const raw = sessionStorage.getItem(key);
+                if (!raw) continue;
+
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && (parsed.email || parsed.user_email || parsed.emailId || parsed.userEmail)) {
+                        return parsed;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+
+            const directEmail = sessionStorage.getItem("duemate-user-email") || sessionStorage.getItem("userEmail");
+            if (directEmail && !String(directEmail).trim().startsWith("{")) {
+                return { email: String(directEmail).trim().toLowerCase() };
+            }
+
+            return null;
+        }
+
+        const loggedInUser = sessionStorage.getItem("duemate-user");
+        const sessionUser = getSessionUser();
+
+        if (!sessionUser || !sessionUser.email) {
+            window.location.href = "index.html?redirect=settings";
+            throw new Error("No authenticated user found.");
+        }
+
+
+        /* =========================================================
+           ELEMENTS
+        ========================================================= */
+
+        const toast =
+            document.getElementById("toast");
+
+
+        /* =========================================================
+           USER-SPECIFIC SETTINGS KEY
+
+           Each account gets separate settings.
+        ========================================================= */
+
+        let currentUser = sessionUser || {};
+
+        const userEmail =
+            (currentUser.email || currentUser.user_email || currentUser.emailId || currentUser.userEmail || "default-user").trim().toLowerCase();
+
+        const settingsKey =
+            "duemate-settings-" +
+            encodeURIComponent(userEmail);
+
+
+        /* =========================================================
+           DEFAULT SETTINGS
+        ========================================================= */
+
+        const defaultSettings = {
+
+            language: "English",
+
+            startPage: "dashboard.html",
+
+            compact: false,
+
+            theme: "light",
+
+            taskReminders: true,
+
+            deadlineAlerts: true,
+
+            groupNotifications: true,
+
+            dailySummary: false,
+
+            profileVisibility: "private",
+
+            activityVisibility: false
+        };
+
+
+        /* =========================================================
+           LOAD SETTINGS
+        ========================================================= */
+
+        function loadSettings() {
+
+            let saved = {};
+
+            try {
+
+                saved =
+                    JSON.parse(
+                        localStorage.getItem(
+                            settingsKey
+                        )
+                    ) || {};
+
+            } catch (error) {
+
+                saved = {};
+            }
+
+            const savedTheme =
+                localStorage.getItem(
+                    "duemate-theme-" + encodeURIComponent(userEmail)
+                ) || localStorage.getItem("duemate-theme");
+
+            if (
+                savedTheme === "light" ||
+                savedTheme === "dark" ||
+                savedTheme === "system"
+            ) {
+                saved.theme = savedTheme;
+            }
+
+            return {
+                ...defaultSettings,
+                ...saved
+            };
+        }
+
+
+        let settings =
+            loadSettings();
+
+
+        /* =========================================================
+           SAVE SETTINGS INTERNALLY
+        ========================================================= */
+
+        function saveSettingsData() {
+
+            localStorage.setItem(
+                settingsKey,
+                JSON.stringify(settings)
+            );
+        }
+
+
+        /* =========================================================
+           APPLY THEME
+        ========================================================= */
+
+        async function applyTheme(theme) {
+
+            if (theme === "dark") {
+                document.body.classList.add("dark");
+            } else if (theme === "light") {
+                document.body.classList.remove("dark");
+            } else {
+                const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                document.body.classList.toggle("dark", systemDark);
+            }
+
+            localStorage.setItem("duemate-theme", theme);
+
+            if (userEmail && userEmail !== "default-user") {
+                localStorage.setItem("duemate-theme-" + encodeURIComponent(userEmail), theme);
+            }
+
+            try {
+                const response = await fetch("http://localhost:5000/api/user/theme", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: userEmail, theme })
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    console.warn("Theme save failed on backend:", data.message || "Unknown error");
+                }
+            } catch (error) {
+                console.warn("Unable to sync theme to backend:", error);
+            }
+        }
+
+
+        /* =========================================================
+           SELECT THEME
+        ========================================================= */
+
+        async function selectTheme(theme) {
+
+            settings.theme = theme;
+
+            await applyTheme(theme);
+
+            updateThemeSelection();
+
+            saveSettingsData();
+
+            showToast(
+                "Appearance updated successfully."
+            );
+        }
+
+
+        /* =========================================================
+           UPDATE THEME UI
+        ========================================================= */
+
+        function updateThemeSelection() {
+
+            document
+                .getElementById("lightTheme")
+                .classList.remove("selected");
+
+            document
+                .getElementById("darkTheme")
+                .classList.remove("selected");
+
+            document
+                .getElementById("systemTheme")
+                .classList.remove("selected");
+
+
+            if (settings.theme === "dark") {
+
+                document
+                    .getElementById("darkTheme")
+                    .classList.add("selected");
+
+            } else if (settings.theme === "system") {
+
+                document
+                    .getElementById("systemTheme")
+                    .classList.add("selected");
+
+            } else {
+
+                document
+                    .getElementById("lightTheme")
+                    .classList.add("selected");
+            }
+        }
+
+
+        /* =========================================================
+           LOAD FORM VALUES
+        ========================================================= */
+
+        function populateSettings() {
+
+            document.getElementById(
+                "languageSelect"
+            ).value =
+                settings.language;
+
+            document.getElementById(
+                "startPageSelect"
+            ).value =
+                settings.startPage;
+
+            document.getElementById(
+                "compactToggle"
+            ).checked =
+                settings.compact;
+
+            document.getElementById(
+                "taskReminderToggle"
+            ).checked =
+                settings.taskReminders;
+
+            document.getElementById(
+                "deadlineToggle"
+            ).checked =
+                settings.deadlineAlerts;
+
+            document.getElementById(
+                "groupNotificationToggle"
+            ).checked =
+                settings.groupNotifications;
+
+            document.getElementById(
+                "dailySummaryToggle"
+            ).checked =
+                settings.dailySummary;
+
+            document.getElementById(
+                "profileVisibility"
+            ).value =
+                settings.profileVisibility;
+
+            document.getElementById(
+                "activityToggle"
+            ).checked =
+                settings.activityVisibility;
+
+            updateThemeSelection();
+        }
+
+
+        /* =========================================================
+           SAVE SETTINGS BUTTON
+        ========================================================= */
+
+        async function saveSettings() {
+
+            settings.language =
+                document.getElementById(
+                    "languageSelect"
+                ).value;
+
+            settings.startPage =
+                document.getElementById(
+                    "startPageSelect"
+                ).value;
+
+            settings.compact =
+                document.getElementById(
+                    "compactToggle"
+                ).checked;
+
+            settings.taskReminders =
+                document.getElementById(
+                    "taskReminderToggle"
+                ).checked;
+
+            settings.deadlineAlerts =
+                document.getElementById(
+                    "deadlineToggle"
+                ).checked;
+
+            settings.groupNotifications =
+                document.getElementById(
+                    "groupNotificationToggle"
+                ).checked;
+
+            settings.dailySummary =
+                document.getElementById(
+                    "dailySummaryToggle"
+                ).checked;
+
+            settings.profileVisibility =
+                document.getElementById(
+                    "profileVisibility"
+                ).value;
+
+            settings.activityVisibility =
+                document.getElementById(
+                    "activityToggle"
+                ).checked;
+
+
+            saveSettingsData();
+
+            await applyTheme(settings.theme);
+
+            showToast(
+                "Settings saved successfully! ✅"
+            );
+        }
+
+
+        /* =========================================================
+           SECTION SWITCHING
+        ========================================================= */
+
+        function showSection(
+            sectionId,
+            clickedButton
+        ) {
+
+            const sections =
+                document.querySelectorAll(
+                    ".settings-section"
+                );
+
+            sections.forEach(
+                function(section) {
+
+                    section.style.display =
+                        "none";
+                }
+            );
+
+
+            const selected =
+                document.getElementById(
+                    sectionId
+                );
+
+            if (selected) {
+
+                selected.style.display =
+                    "block";
+            }
+
+
+            const buttons =
+                document.querySelectorAll(
+                    ".menu-btn"
+                );
+
+            buttons.forEach(
+                function(button) {
+
+                    button.classList.remove(
+                        "active"
+                    );
+                }
+            );
+
+
+            clickedButton.classList.add(
+                "active"
+            );
+        }
+
+
+        /* =========================================================
+           DASHBOARD
+        ========================================================= */
+
+        function goDashboard() {
+
+            window.location.href =
+                "dashboard.html";
+        }
+
+
+        /* =========================================================
+           PROFILE
+
+           IMPORTANT:
+           Profile is a separate page.
+           Settings does NOT contain profile details.
+        ========================================================= */
+
+        function goProfile() {
+
+            window.location.href =
+                "profile.html";
+        }
+
+
+        /* =========================================================
+           LOGOUT
+        ========================================================= */
+
+        function logout() {
+
+            const confirmed =
+                confirm(
+                    "Are you sure you want to logout?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            sessionStorage.removeItem("duemate-user");
+            sessionStorage.removeItem("dueMateUser");
+            sessionStorage.removeItem("loggedInUser");
+            sessionStorage.removeItem("duemate-current-user");
+            sessionStorage.removeItem("duemate-user-email");
+            sessionStorage.removeItem("userEmail");
+            localStorage.removeItem("duemate-remembered-email");
+
+            window.location.href = "index.html";
+        }
+
+
+        /* =========================================================
+           CLEAR PREFERENCES
+        ========================================================= */
+
+        function clearPreferences() {
+
+            const confirmed =
+                confirm(
+                    "Clear your saved DueMate settings?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            localStorage.removeItem(
+                settingsKey
+            );
+
+            localStorage.removeItem(
+                "duemate-theme"
+            );
+
+            if (userEmail && userEmail !== "default-user") {
+                localStorage.removeItem(
+                    "duemate-theme-" + encodeURIComponent(userEmail)
+                );
+            }
+
+            settings =
+                {
+                    ...defaultSettings
+                };
+
+            populateSettings();
+
+            applyTheme(
+                settings.theme
+            );
+
+            showToast(
+                "Preferences cleared."
+            );
+        }
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+        let toastTimer;
+
+        function showToast(message) {
+
+            clearTimeout(toastTimer);
+
+            toast.textContent =
+                message;
+
+            toast.classList.add(
+                "show"
+            );
+
+            toastTimer =
+                setTimeout(
+                    function() {
+
+                        toast.classList.remove(
+                            "show"
+                        );
+
+                    },
+                    2500
+                );
+        }
+
+
+        /* =========================================================
+           SYSTEM THEME CHANGE
+        ========================================================= */
+
+        window
+            .matchMedia(
+                "(prefers-color-scheme: dark)"
+            )
+            .addEventListener(
+                "change",
+                function() {
+
+                    if (
+                        settings.theme ===
+                        "system"
+                    ) {
+
+                        applyTheme(
+                            "system"
+                        );
+                    }
+                }
+            );
+
+
+        /* =========================================================
+           INITIALIZE
+        ========================================================= */
+
+        applyTheme(
+            settings.theme
+        );
+
+        populateSettings();
+
+    </script>
+
+    <script src="app-shell.js"></script>
+</body>
+</html>
