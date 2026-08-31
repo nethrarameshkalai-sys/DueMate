@@ -2137,7 +2137,7 @@
             }
 
             try {
-                const response = await fetch("http://localhost:5000/api/user/theme", {
+                const response = await fetch("https://due-mate-backend.vercel.app/api/user/theme", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: userEmail, theme })
