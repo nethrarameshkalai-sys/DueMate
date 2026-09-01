@@ -8,6 +8,7 @@
           content="DueMate - Application Settings">
 
     <title>DueMate - Settings</title>
+    <script src="config.js"></script>
 
     <style>
         /* =========================================================
@@ -842,6 +843,17 @@
             box-shadow:
                 0 0 0 3px
                 rgba(117,108,255,0.10);
+        }
+
+        .setting-select option {
+            background: var(--bg);
+            color: var(--text);
+            padding: 8px;
+        }
+
+        body.dark .setting-select option {
+            background: #151b32;
+            color: #f4f5ff;
         }
 
 
@@ -2103,6 +2115,54 @@
 
 
         /* =========================================================
+           SAVE SETTINGS TO BACKEND
+        ========================================================= */
+
+        async function saveSettingsToBackend() {
+
+            if (!userEmail || userEmail === "default-user") {
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('jwtToken');
+                if (!token) {
+                    return; // No token, skip backend sync
+                }
+
+                const apiUrl = window.API_BASE_URL || window.API_BASE || 'http://localhost:5000';
+                const response = await fetch(
+                    `${apiUrl}/api/settings`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            theme: settings.theme,
+                            language: settings.language,
+                            start_page: settings.startPage,
+                            notification_sound: settings.notification_sound !== false,
+                            notification_desktop: settings.notification_desktop !== false,
+                            notification_email: settings.notification_email === true,
+                            task_notifications: settings.task_notifications !== false,
+                            group_notifications: settings.group_notifications !== false
+                        })
+                    }
+                );
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    console.warn("Settings save failed:", data.message);
+                }
+            } catch (error) {
+                console.warn("Unable to save settings to backend:", error);
+            }
+        }
+
+
+        /* =========================================================
            SAVE SETTINGS INTERNALLY
         ========================================================= */
 
@@ -2112,6 +2172,9 @@
                 settingsKey,
                 JSON.stringify(settings)
             );
+
+            // Also save to backend
+            saveSettingsToBackend();
         }
 
 
@@ -2131,24 +2194,26 @@
             }
 
             localStorage.setItem("duemate-theme", theme);
-
             if (userEmail && userEmail !== "default-user") {
                 localStorage.setItem("duemate-theme-" + encodeURIComponent(userEmail), theme);
             }
 
-            try {
-                const response = await fetch("https://due-mate-backend.vercel.app/api/user/theme", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: userEmail, theme })
-                });
-
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok || !data.success) {
-                    console.warn("Theme save failed on backend:", data.message || "Unknown error");
+            // Save to backend
+            if (userEmail && userEmail !== "default-user") {
+                try {
+                    await window.authenticatedFetch(
+                        `${API_URL}/api/settings`,
+                        {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ theme })
+                        }
+                    );
+                } catch (error) {
+                    console.warn("Unable to sync theme to backend:", error);
                 }
-            } catch (error) {
-                console.warn("Unable to sync theme to backend:", error);
             }
         }
 

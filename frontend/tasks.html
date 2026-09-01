@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>DueMate - Tasks</title>
+    <script src="config.js"></script>`n    <script src="settings-manager.js"></script>
 
     <style>
 
@@ -1257,7 +1258,7 @@
            DUE MATE TASKS
         ===================================================== */
 
-        const API_BASE = "https://due-mate-backend.vercel.app";
+        const API_BASE = window.API_BASE || window.API_BASE_URL || "http://localhost:5000";
 
         let tasks = [];
         let currentFilter = "all";
@@ -1577,8 +1578,8 @@
 
             try {
 
-                const response = await fetch(
-                    `${API_BASE}/api/tasks?user_email=${encodeURIComponent(userEmail)}`
+                const response = await window.authenticatedFetch(
+                    `${API_BASE}/api/tasks`
                 );
 
                 const data = await response.json();
@@ -2203,15 +2204,10 @@
                 if (editingTaskId) {
 
                     response =
-                        await fetch(
+                        await window.authenticatedFetch(
                             `${API_BASE}/api/tasks/${encodeURIComponent(editingTaskId)}`,
                             {
                                 method: "PUT",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
 
                                 body:
                                     JSON.stringify(
@@ -2230,15 +2226,10 @@
                 else {
 
                     response =
-                        await fetch(
+                        await window.authenticatedFetch(
                             `${API_BASE}/api/tasks`,
                             {
                                 method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
 
                                 body:
                                     JSON.stringify(
@@ -2358,15 +2349,10 @@
             try {
 
                 const response =
-                    await fetch(
+                    await window.authenticatedFetch(
                         `${API_BASE}/api/tasks/${encodeURIComponent(id)}`,
                         {
                             method: "PUT",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
 
                             body:
                                 JSON.stringify(
@@ -2450,14 +2436,10 @@
             try {
 
                 const response =
-                    await fetch(
-                        `${API_BASE}/api/tasks/${encodeURIComponent(id)}?user_email=${encodeURIComponent(userEmail)}`,
+                    await window.authenticatedFetch(
+                        `${API_BASE}/api/tasks/${encodeURIComponent(id)}`,
                         {
-                            method: "DELETE",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            }
+                            method: "DELETE"
                         }
                     );
 

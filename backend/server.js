@@ -2,28 +2,170 @@
 // DUE MATE BACKEND SERVER
 // ============================================================
 
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const Joi = require("joi");
 
 const db = require("./config/db");
+const { generateToken, verifyToken, verifyTokenOptional } = require("./middleware/auth");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // ============================================================
 // MIDDLEWARE
 // ============================================================
 
+// Configure CORS for production
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:5500").split(",");
+
 app.use(
     cors({
-        origin: true,
-        credentials: true
+        origin: function (origin, callback) {
+            // Allow requests with no origin (mobile apps, Postman, etc.)
+            if (!origin) return callback(null, true);
+            
+            if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+                callback(null, true);
+            } else {
+                callback(new Error("CORS not allowed"));
+            }
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"]
     })
 );
 
-app.use(express.json());
+// Add Helmet for security headers
+app.use(helmet());
+
+// Rate limiting middleware
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later."
+});
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // limit each IP to 5 login attempts per minute
+    message: "Too many login attempts, please try again after a minute."
+});
+
+app.use("/api/", limiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+// Function to create a notification
+function createNotification(userEmail, type, title, message, relatedId = null, relatedType = null) {
+    const notificationId = crypto.randomBytes(8).toString("hex");
+    const sql = `
+        INSERT INTO notifications (id, user_email, type, title, message, related_id, related_type, read_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    `;
+    
+    db.query(
+        sql,
+        [notificationId, userEmail, type, title, message, relatedId, relatedType],
+        (error) => {
+            if (error) {
+                console.error("Create notification error:", error.message);
+            }
+        }
+    );
+}
+
+// Function to check task reminders and create notifications
+function checkTaskReminders() {
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+    // Get overdue tasks
+    const overdueSQL = `
+        SELECT user_email, id, name
+        FROM tasks
+        WHERE task_date < ? AND completed = 0
+        GROUP BY user_email, id
+    `;
+
+    db.query(overdueSQL, [today], (error, overdueTasks) => {
+        if (!error && overdueTasks && overdueTasks.length > 0) {
+            overdueTasks.forEach(task => {
+                createNotification(
+                    task.user_email,
+                    'overdue',
+                    'Overdue Task',
+                    `Task "${task.name}" is overdue!`,
+                    task.id,
+                    'task'
+                );
+            });
+        }
+    });
+
+    // Get due today tasks
+    const todaySQL = `
+        SELECT user_email, id, name
+        FROM tasks
+        WHERE task_date = ? AND completed = 0
+        GROUP BY user_email, id
+    `;
+
+    db.query(todaySQL, [today], (error, todayTasks) => {
+        if (!error && todayTasks && todayTasks.length > 0) {
+            todayTasks.forEach(task => {
+                createNotification(
+                    task.user_email,
+                    'due_today',
+                    'Task Due Today',
+                    `Task "${task.name}" is due today!`,
+                    task.id,
+                    'task'
+                );
+            });
+        }
+    });
+
+    // Get due tomorrow tasks
+    const tomorrowSQL = `
+        SELECT user_email, id, name
+        FROM tasks
+        WHERE task_date = ? AND completed = 0
+        GROUP BY user_email, id
+    `;
+
+    db.query(tomorrowSQL, [tomorrow], (error, tomorrowTasks) => {
+        if (!error && tomorrowTasks && tomorrowTasks.length > 0) {
+            tomorrowTasks.forEach(task => {
+                createNotification(
+                    task.user_email,
+                    'due_tomorrow',
+                    'Task Due Tomorrow',
+                    `Task "${task.name}" is due tomorrow!`,
+                    task.id,
+                    'task'
+                );
+            });
+        }
+    });
+}
+
+// Run task reminder check every hour
+setInterval(checkTaskReminders, 3600000);
 
 // ============================================================
 // BASIC ERROR HANDLER FOR INVALID JSON
@@ -48,6 +190,14 @@ app.get("/", (req, res) => {
     res.json({
         success: true,
         message: "DueMate Backend is Running!"
+    });
+});
+
+app.get("/test-token", (req, res) => {
+    res.json({
+        success: true,
+        message: "Test response with token",
+        token: "test-jwt-token-1234567890"
     });
 });
 
@@ -422,9 +572,15 @@ app.post("/api/auth/login", (req, res) => {
                     user.theme = "system";
                 }
 
+                // Generate JWT token
+                const token = generateToken(user.email);
+
+                console.log("🔐 Login DEBUG: Token generated:", token ? "YES" : "NO", "Token length:", token ? token.length : 0);
+
                 return res.status(200).json({
                     success: true,
                     message: "Login successful.",
+                    token: token,
                     user: user
                 });
             } catch (verifyError) {
@@ -445,20 +601,11 @@ app.post("/api/auth/login", (req, res) => {
 
 // ============================================================
 // GET PROFILE
-// GET /api/user/profile?email=example@gmail.com
+// GET /api/user/profile
 // ============================================================
 
-app.get("/api/user/profile", (req, res) => {
-    const email = req.query.email;
-
-    if (!email) {
-        return res.status(400).json({
-            success: false,
-            message: "Email is required."
-        });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
+app.get("/api/user/profile", verifyToken, (req, res) => {
+    const email = req.user.email;
 
     const sql = `
         SELECT
@@ -480,7 +627,7 @@ app.get("/api/user/profile", (req, res) => {
 
     db.query(
         sql,
-        [cleanEmail],
+        [email],
         (error, results) => {
             if (error) {
                 console.error(
@@ -527,7 +674,8 @@ app.get("/api/user/profile", (req, res) => {
 // PUT /api/user/profile
 // ============================================================
 
-app.put("/api/user/profile", (req, res) => {
+app.put("/api/user/profile", verifyToken, (req, res) => {
+    const authenticatedEmail = req.user.email;
     const {
         email,
         name,
@@ -538,15 +686,14 @@ app.put("/api/user/profile", (req, res) => {
         year
     } = req.body;
 
-    if (!email || !name) {
+    if (!name) {
         return res.status(400).json({
             success: false,
             message:
-                "Email and full name are required."
+                "Full name is required."
         });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
     const cleanName = String(name).trim();
     const cleanMobile = mobile ? String(mobile).trim() : "";
     const cleanCollege = college ? String(college).trim() : "";
@@ -607,7 +754,7 @@ app.put("/api/user/profile", (req, res) => {
             cleanDepartment,
             cleanCourse,
             cleanYear,
-            cleanEmail
+            authenticatedEmail
         ],
         (error, result) => {
             if (error) {
@@ -641,7 +788,7 @@ app.put("/api/user/profile", (req, res) => {
                     department: cleanDepartment,
                     course: cleanCourse,
                     year: cleanYear,
-                    email: cleanEmail,
+                    email: authenticatedEmail,
                     mobile: cleanMobile
                 }
             });
@@ -654,17 +801,17 @@ app.put("/api/user/profile", (req, res) => {
 // POST /api/user/theme
 // ============================================================
 
-app.post("/api/user/theme", (req, res) => {
+app.post("/api/user/theme", verifyToken, (req, res) => {
+    const email = req.user.email;
     const {
-        email,
         theme
     } = req.body;
 
-    if (!email || !theme) {
+    if (!theme) {
         return res.status(400).json({
             success: false,
             message:
-                "Email and theme are required."
+                "Theme is required."
         });
     }
 
@@ -682,8 +829,6 @@ app.post("/api/user/theme", (req, res) => {
         });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
-
     const sql = `
         UPDATE users
         SET theme = ?
@@ -695,7 +840,7 @@ app.post("/api/user/theme", (req, res) => {
         sql,
         [
             theme,
-            cleanEmail
+            email
         ],
         (error, result) => {
             if (error) {
@@ -736,22 +881,22 @@ app.post("/api/user/theme", (req, res) => {
 
 app.post(
     "/api/user/change-password",
+    verifyToken,
     async (req, res) => {
+        const email = req.user.email;
         const {
-            email,
             currentPassword,
             newPassword
         } = req.body;
 
         if (
-            !email ||
             !currentPassword ||
             !newPassword
         ) {
             return res.status(400).json({
                 success: false,
                 message:
-                    "Email, current password and new password are required."
+                    "Current password and new password are required."
             });
         }
 
@@ -762,8 +907,6 @@ app.post(
                     "New password must contain at least 8 characters."
             });
         }
-
-        const cleanEmail = String(email).trim().toLowerCase();
 
         const findUserSql = `
             SELECT
@@ -776,7 +919,7 @@ app.post(
 
         db.query(
             findUserSql,
-            [cleanEmail],
+            [email],
             async (error, results) => {
                 if (error) {
                     console.error(
@@ -978,11 +1121,12 @@ app.post(
                         }
 
                         // ------------------------------------
-                        // DEVELOPMENT RESET LINK
+                        // PASSWORD RESET LINK
                         // ------------------------------------
 
+                        const frontendURL = process.env.FRONTEND_URL || "http://localhost:5500";
                         const resetLink =
-                            `http://127.0.0.1:5500/forgot-password.html?token=${encodeURIComponent(resetToken)}`;
+                            `${frontendURL}/forgot-password.html?token=${encodeURIComponent(resetToken)}`;
 
                         console.log(
                             "Password reset link:",
@@ -1187,12 +1331,8 @@ app.post(
 // GROUPS
 // ============================================================
 
-app.get("/api/groups", (req, res) => {
-    const userEmail = String(req.query.user_email || "").trim().toLowerCase();
-
-    if (!userEmail) {
-        return res.status(400).json({ success: false, message: "User email is required." });
-    }
+app.get("/api/groups", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
 
     const sql = `
         SELECT g.id, g.owner_email, g.name, g.purpose,
@@ -1216,14 +1356,14 @@ app.get("/api/groups", (req, res) => {
     });
 });
 
-app.post("/api/groups", (req, res) => {
-    const ownerEmail = String(req.body.user_email || "").trim().toLowerCase();
+app.post("/api/groups", verifyToken, (req, res) => {
+    const ownerEmail = req.user.email;
     const name = String(req.body.name || "").trim();
     const purpose = String(req.body.purpose || "").trim();
     const minimumMembers = Number(req.body.minimum_members);
     const maximumMembers = Number(req.body.maximum_members);
 
-    if (!ownerEmail || !name || !purpose || !Number.isInteger(minimumMembers) || !Number.isInteger(maximumMembers) || minimumMembers < 1 || maximumMembers < minimumMembers) {
+    if (!name || !purpose || !Number.isInteger(minimumMembers) || !Number.isInteger(maximumMembers) || minimumMembers < 1 || maximumMembers < minimumMembers) {
         return res.status(400).json({ success: false, message: "Valid group details are required." });
     }
 
@@ -1247,15 +1387,15 @@ app.post("/api/groups", (req, res) => {
     });
 });
 
-app.put("/api/groups/:id", (req, res) => {
+app.put("/api/groups/:id", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const ownerEmail = String(req.body.user_email || "").trim().toLowerCase();
+    const ownerEmail = req.user.email;
     const name = String(req.body.name || "").trim();
     const purpose = String(req.body.purpose || "").trim();
     const minimumMembers = Number(req.body.minimum_members);
     const maximumMembers = Number(req.body.maximum_members);
 
-    if (!groupId || !ownerEmail || !name || !purpose || maximumMembers < minimumMembers) {
+    if (!groupId || !name || !purpose || maximumMembers < minimumMembers) {
         return res.status(400).json({ success: false, message: "Valid group details are required." });
     }
 
@@ -1270,11 +1410,11 @@ app.put("/api/groups/:id", (req, res) => {
     });
 });
 
-app.post("/api/groups/join", (req, res) => {
-    const userEmail = String(req.body.user_email || "").trim().toLowerCase();
+app.post("/api/groups/join", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
     const joinCode = String(req.body.join_code || "").trim().toUpperCase();
 
-    if (!userEmail || !joinCode) return res.status(400).json({ success: false, message: "Join code and user email are required." });
+    if (!joinCode) return res.status(400).json({ success: false, message: "Join code is required." });
 
     db.query("SELECT id, name, maximum_members FROM `groups` WHERE join_code = ? LIMIT 1", [joinCode], (error, groups) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to find group right now." });
@@ -1293,10 +1433,10 @@ app.post("/api/groups/join", (req, res) => {
     });
 });
 
-app.post("/api/groups/:id/join-request", (req, res) => {
+app.post("/api/groups/:id/join-request", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const userEmail = String(req.body.user_email || "").trim().toLowerCase();
-    if (!groupId || !userEmail) return res.status(400).json({ success: false, message: "User email and group are required." });
+    const userEmail = req.user.email;
+    if (!groupId) return res.status(400).json({ success: false, message: "Group is required." });
 
     db.query("SELECT maximum_members FROM `groups` WHERE id = ? LIMIT 1", [groupId], (error, groups) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to find group." });
@@ -1314,8 +1454,8 @@ app.post("/api/groups/:id/join-request", (req, res) => {
     });
 });
 
-app.get("/api/groups/requests", (req, res) => {
-    const ownerEmail = String(req.query.user_email || "").trim().toLowerCase();
+app.get("/api/groups/requests", verifyToken, (req, res) => {
+    const ownerEmail = req.user.email;
     const sql = `SELECT r.id, r.group_id, r.user_email, r.created_at, g.name AS group_name FROM group_join_requests r INNER JOIN \`groups\` g ON g.id = r.group_id WHERE g.owner_email = ? AND r.status = 'pending' ORDER BY r.created_at DESC`;
     db.query(sql, [ownerEmail], (error, requests) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to load join requests." });
@@ -1323,9 +1463,9 @@ app.get("/api/groups/requests", (req, res) => {
     });
 });
 
-app.patch("/api/groups/requests/:id", (req, res) => {
+app.patch("/api/groups/requests/:id", verifyToken, (req, res) => {
     const requestId = String(req.params.id || "").trim();
-    const ownerEmail = String(req.body.user_email || "").trim().toLowerCase();
+    const ownerEmail = req.user.email;
     const action = req.body.action === "approve" ? "approve" : "reject";
     const sql = `SELECT r.group_id, r.user_email, g.maximum_members FROM group_join_requests r INNER JOIN \`groups\` g ON g.id = r.group_id WHERE r.id = ? AND g.owner_email = ? AND r.status = 'pending' LIMIT 1`;
     db.query(sql, [requestId, ownerEmail], (error, requests) => {
@@ -1347,9 +1487,9 @@ app.patch("/api/groups/requests/:id", (req, res) => {
     });
 });
 
-app.get("/api/groups/:id/workspace", (req, res) => {
+app.get("/api/groups/:id/workspace", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const userEmail = String(req.query.user_email || "").trim().toLowerCase();
+    const userEmail = req.user.email;
     const accessSql = `SELECT g.*, m.role FROM \`groups\` g INNER JOIN group_members m ON m.group_id = g.id AND m.user_email = ? WHERE g.id = ? LIMIT 1`;
     db.query(accessSql, [userEmail, groupId], (error, groups) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to load group workspace." });
@@ -1371,9 +1511,9 @@ app.get("/api/groups/:id/workspace", (req, res) => {
     });
 });
 
-app.put("/api/groups/:id/rules", (req, res) => {
+app.put("/api/groups/:id/rules", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const ownerEmail = String(req.body.user_email || "").trim().toLowerCase();
+    const ownerEmail = req.user.email;
     const rules = String(req.body.rules || "").trim();
     const sql = `INSERT INTO group_rules (group_id, rules) SELECT ?, ? FROM DUAL WHERE EXISTS (SELECT 1 FROM \`groups\` WHERE id = ? AND owner_email = ?) ON DUPLICATE KEY UPDATE rules = VALUES(rules)`;
     db.query(sql, [groupId, rules, groupId, ownerEmail], (error, result) => {
@@ -1383,9 +1523,9 @@ app.put("/api/groups/:id/rules", (req, res) => {
     });
 });
 
-app.post("/api/groups/:id/challenges", (req, res) => {
+app.post("/api/groups/:id/challenges", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const creator = String(req.body.user_email || "").trim().toLowerCase();
+    const creator = req.user.email;
     const title = String(req.body.title || "").trim();
     const description = String(req.body.description || "").trim();
     const points = Math.max(0, Math.min(10000, Number(req.body.points) || 0));
@@ -1399,9 +1539,9 @@ app.post("/api/groups/:id/challenges", (req, res) => {
     });
 });
 
-app.post("/api/groups/:id/game-results", (req, res) => {
+app.post("/api/groups/:id/game-results", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const userEmail = String(req.body.user_email || "").trim().toLowerCase();
+    const userEmail = req.user.email;
     const gameName = String(req.body.game_name || "").trim().slice(0, 100);
     const score = Math.max(0, Math.min(100000, Number(req.body.score) || 0));
     const points = Math.min(100, Math.floor(score / 10));
@@ -1416,9 +1556,9 @@ app.post("/api/groups/:id/game-results", (req, res) => {
     });
 });
 
-app.delete("/api/groups/:id/members/:memberEmail", (req, res) => {
+app.delete("/api/groups/:id/members/:memberEmail", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const requester = String(req.body.user_email || "").trim().toLowerCase();
+    const requester = req.user.email;
     const memberEmail = String(req.params.memberEmail || "").trim().toLowerCase();
     const sql = `SELECT role FROM group_members WHERE group_id = ? AND user_email = ? LIMIT 1`;
     db.query(sql, [groupId, requester], (error, rows) => {
@@ -1434,9 +1574,9 @@ app.delete("/api/groups/:id/members/:memberEmail", (req, res) => {
     });
 });
 
-app.delete("/api/groups/:id", (req, res) => {
+app.delete("/api/groups/:id", verifyToken, (req, res) => {
     const groupId = String(req.params.id || "").trim();
-    const userEmail = String(req.body.user_email || "").trim().toLowerCase();
+    const userEmail = req.user.email;
 
     db.query("DELETE FROM `groups` WHERE id = ? AND owner_email = ?", [groupId, userEmail], (error, result) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to delete group right now." });
@@ -1452,22 +1592,11 @@ app.delete("/api/groups/:id", (req, res) => {
 
 // ============================================================
 // GET ALL TASKS
-// GET /api/tasks?user_email=example@gmail.com
+// GET /api/tasks
 // ============================================================
 
-app.get("/api/tasks", (req, res) => {
-    const userEmail = req.query.user_email;
-
-    if (!userEmail) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "User email is required."
-        });
-    }
-
-    const cleanEmail =
-        String(userEmail).trim().toLowerCase();
+app.get("/api/tasks", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
 
     const sql = `
         SELECT
@@ -1490,7 +1619,7 @@ app.get("/api/tasks", (req, res) => {
 
     db.query(
         sql,
-        [cleanEmail],
+        [userEmail],
         (error, results) => {
             if (error) {
                 console.error(
@@ -1520,9 +1649,8 @@ app.get("/api/tasks", (req, res) => {
 // POST /api/tasks
 // ============================================================
 
-app.post("/api/tasks", (req, res) => {
+app.post("/api/tasks", verifyToken, (req, res) => {
     const {
-        user_email,
         name,
         subject,
         date,
@@ -1531,13 +1659,7 @@ app.post("/api/tasks", (req, res) => {
         completed
     } = req.body;
 
-    if (!user_email) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "User email is required."
-        });
-    }
+    const user_email = req.user.email;
 
     if (!name || !String(name).trim()) {
         return res.status(400).json({
@@ -1554,9 +1676,6 @@ app.post("/api/tasks", (req, res) => {
                 "Task date is required."
         });
     }
-
-    const cleanEmail =
-        String(user_email).trim().toLowerCase();
 
     const cleanName =
         String(name).trim();
@@ -1598,7 +1717,7 @@ app.post("/api/tasks", (req, res) => {
         sql,
         [
             taskId,
-            cleanEmail,
+            user_email,
             cleanName,
             cleanSubject,
             date,
@@ -1674,12 +1793,11 @@ app.post("/api/tasks", (req, res) => {
 // PUT /api/tasks/:id
 // ============================================================
 
-app.put("/api/tasks/:id", (req, res) => {
+app.put("/api/tasks/:id", verifyToken, (req, res) => {
     const taskId =
         String(req.params.id).trim();
 
     const {
-        user_email,
         name,
         subject,
         date,
@@ -1688,19 +1806,13 @@ app.put("/api/tasks/:id", (req, res) => {
         completed
     } = req.body;
 
+    const user_email = req.user.email;
+
     if (!taskId) {
         return res.status(400).json({
             success: false,
             message:
                 "Invalid task ID."
-        });
-    }
-
-    if (!user_email) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "User email is required."
         });
     }
 
@@ -1719,9 +1831,6 @@ app.put("/api/tasks/:id", (req, res) => {
                 "Task date is required."
         });
     }
-
-    const cleanEmail =
-        String(user_email).trim().toLowerCase();
 
     const cleanName =
         String(name).trim();
@@ -1769,7 +1878,7 @@ app.put("/api/tasks/:id", (req, res) => {
                     ? 1
                     : 0,
             taskId,
-            cleanEmail
+            user_email
         ],
         (error, result) => {
             if (error) {
@@ -1815,7 +1924,7 @@ app.put("/api/tasks/:id", (req, res) => {
                 getTaskSql,
                 [
                     taskId,
-                    cleanEmail
+                    user_email
                 ],
                 (getError, results) => {
                     if (getError) {
@@ -1848,12 +1957,11 @@ app.put("/api/tasks/:id", (req, res) => {
 // PATCH /api/tasks/:id/toggle
 // ============================================================
 
-app.patch("/api/tasks/:id/toggle", (req, res) => {
+app.patch("/api/tasks/:id/toggle", verifyToken, (req, res) => {
     const taskId =
         String(req.params.id).trim();
 
-    const userEmail =
-        req.body.user_email;
+    const userEmail = req.user.email;
 
     if (!taskId) {
         return res.status(400).json({
@@ -1862,17 +1970,6 @@ app.patch("/api/tasks/:id/toggle", (req, res) => {
                 "Invalid task ID."
         });
     }
-
-    if (!userEmail) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "User email is required."
-        });
-    }
-
-    const cleanEmail =
-        String(userEmail).trim().toLowerCase();
 
     const findSql = `
         SELECT
@@ -1888,7 +1985,7 @@ app.patch("/api/tasks/:id/toggle", (req, res) => {
         findSql,
         [
             taskId,
-            cleanEmail
+            userEmail
         ],
         (error, results) => {
             if (error) {
@@ -1928,7 +2025,7 @@ app.patch("/api/tasks/:id/toggle", (req, res) => {
                 [
                     newCompleted,
                     taskId,
-                    cleanEmail
+                    userEmail
                 ],
                 (updateError, updateResult) => {
                     if (updateError) {
@@ -1967,16 +2064,14 @@ app.patch("/api/tasks/:id/toggle", (req, res) => {
 
 // ============================================================
 // DELETE TASK
-// DELETE /api/tasks/:id?user_email=example@gmail.com
+// DELETE /api/tasks/:id
 // ============================================================
 
-app.delete("/api/tasks/:id", (req, res) => {
+app.delete("/api/tasks/:id", verifyToken, (req, res) => {
     const taskId =
         String(req.params.id).trim();
 
-    const userEmail =
-        req.query.user_email ||
-        req.body.user_email;
+    const userEmail = req.user.email;
 
     if (!taskId) {
         return res.status(400).json({
@@ -1985,17 +2080,6 @@ app.delete("/api/tasks/:id", (req, res) => {
                 "Invalid task ID."
         });
     }
-
-    if (!userEmail) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "User email is required."
-        });
-    }
-
-    const cleanEmail =
-        String(userEmail).trim().toLowerCase();
 
     const sql = `
         DELETE FROM tasks
@@ -2008,7 +2092,7 @@ app.delete("/api/tasks/:id", (req, res) => {
         sql,
         [
             taskId,
-            cleanEmail
+            userEmail
         ],
         (error, result) => {
             if (error) {
@@ -2042,6 +2126,1273 @@ app.delete("/api/tasks/:id", (req, res) => {
 });
 
 // ============================================================
+// NOTIFICATIONS ENDPOINTS
+// ============================================================
+
+// GET /api/notifications - Get all notifications for user
+app.get("/api/notifications", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT id, type, title, message, related_id, related_type, read_status, created_at
+        FROM notifications
+        WHERE user_email = ?
+        ORDER BY created_at DESC
+        LIMIT 50
+    `;
+
+    db.query(sql, [userEmail], (error, results) => {
+        if (error) {
+            console.error("Get notifications error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch notifications."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            notifications: results || []
+        });
+    });
+});
+
+// PATCH /api/notifications/:id/read - Mark notification as read
+app.patch("/api/notifications/:id/read", verifyToken, (req, res) => {
+    const notificationId = String(req.params.id).trim();
+    const userEmail = req.user.email;
+
+    const sql = `
+        UPDATE notifications
+        SET read_status = 1
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(sql, [notificationId, userEmail], (error, result) => {
+        if (error) {
+            console.error("Mark notification read error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to mark notification as read."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Notification marked as read."
+        });
+    });
+});
+
+// DELETE /api/notifications/:id - Delete notification
+app.delete("/api/notifications/:id", verifyToken, (req, res) => {
+    const notificationId = String(req.params.id).trim();
+    const userEmail = req.user.email;
+
+    const sql = `
+        DELETE FROM notifications
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(sql, [notificationId, userEmail], (error, result) => {
+        if (error) {
+            console.error("Delete notification error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to delete notification."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Notification deleted successfully."
+        });
+    });
+});
+
+// ============================================================
+// SUBJECTS ENDPOINTS
+// ============================================================
+
+// GET /api/subjects - Get all subjects for user
+app.get("/api/subjects", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT id, name, code, color, description, created_at
+        FROM subjects
+        WHERE user_email = ?
+        ORDER BY created_at DESC
+    `;
+
+    db.query(sql, [userEmail], (error, results) => {
+        if (error) {
+            console.error("Get subjects error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch subjects."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            subjects: results || []
+        });
+    });
+});
+
+// POST /api/subjects - Create new subject
+app.post("/api/subjects", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const { name, code, color, description } = req.body;
+
+    if (!name || name.trim() === "") {
+        return res.status(400).json({
+            success: false,
+            message: "Subject name is required."
+        });
+    }
+
+    const subjectId = crypto.randomBytes(8).toString("hex");
+    const cleanName = String(name).trim().substring(0, 255);
+    const cleanCode = code ? String(code).trim().substring(0, 50) : null;
+    const cleanColor = color ? String(color).trim().substring(0, 20) : "#5d9cff";
+    const cleanDescription = description ? String(description).trim() : null;
+
+    const sql = `
+        INSERT INTO subjects (id, user_email, name, code, color, description)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+        sql,
+        [subjectId, userEmail, cleanName, cleanCode, cleanColor, cleanDescription],
+        (error, result) => {
+            if (error) {
+                console.error("Create subject error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to create subject."
+                });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: "Subject created successfully.",
+                subject: {
+                    id: subjectId,
+                    name: cleanName,
+                    code: cleanCode,
+                    color: cleanColor,
+                    description: cleanDescription
+                }
+            });
+        }
+    );
+});
+
+// PUT /api/subjects/:id - Update subject
+app.put("/api/subjects/:id", verifyToken, (req, res) => {
+    const subjectId = String(req.params.id).trim();
+    const userEmail = req.user.email;
+    const { name, code, color, description } = req.body;
+
+    if (!name || name.trim() === "") {
+        return res.status(400).json({
+            success: false,
+            message: "Subject name is required."
+        });
+    }
+
+    const cleanName = String(name).trim().substring(0, 255);
+    const cleanCode = code ? String(code).trim().substring(0, 50) : null;
+    const cleanColor = color ? String(color).trim().substring(0, 20) : "#5d9cff";
+    const cleanDescription = description ? String(description).trim() : null;
+
+    const sql = `
+        UPDATE subjects
+        SET name = ?, code = ?, color = ?, description = ?
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(
+        sql,
+        [cleanName, cleanCode, cleanColor, cleanDescription, subjectId, userEmail],
+        (error, result) => {
+            if (error) {
+                console.error("Update subject error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to update subject."
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Subject not found."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Subject updated successfully."
+            });
+        }
+    );
+});
+
+// DELETE /api/subjects/:id - Delete subject
+app.delete("/api/subjects/:id", verifyToken, (req, res) => {
+    const subjectId = String(req.params.id).trim();
+    const userEmail = req.user.email;
+
+    const sql = `
+        DELETE FROM subjects
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(sql, [subjectId, userEmail], (error, result) => {
+        if (error) {
+            console.error("Delete subject error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to delete subject."
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Subject not found."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Subject deleted successfully."
+        });
+    });
+});
+
+// ============================================================
+// SUBJECT NOTES ENDPOINTS
+// ============================================================
+
+// GET /api/subjects/:subjectId/notes - Get all notes for subject
+app.get("/api/subjects/:subjectId/notes", verifyToken, (req, res) => {
+    const subjectId = String(req.params.subjectId).trim();
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT n.id, n.title, n.content, n.note_type, n.created_at, n.updated_at
+        FROM subject_notes n
+        WHERE n.subject_id = ? AND n.user_email = ?
+        ORDER BY n.created_at DESC
+    `;
+
+    db.query(sql, [subjectId, userEmail], (error, results) => {
+        if (error) {
+            console.error("Get notes error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch notes."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            notes: results || []
+        });
+    });
+});
+
+// POST /api/subjects/:subjectId/notes - Create new note
+app.post("/api/subjects/:subjectId/notes", verifyToken, (req, res) => {
+    const subjectId = String(req.params.subjectId).trim();
+    const userEmail = req.user.email;
+    const { title, content, note_type } = req.body;
+
+    if (!title || title.trim() === "") {
+        return res.status(400).json({
+            success: false,
+            message: "Note title is required."
+        });
+    }
+
+    const noteId = crypto.randomBytes(8).toString("hex");
+    const cleanTitle = String(title).trim().substring(0, 255);
+    const cleanContent = content ? String(content).trim() : "";
+    const noteType = note_type ? String(note_type).trim() : "text";
+
+    const sql = `
+        INSERT INTO subject_notes (id, subject_id, user_email, title, content, note_type)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+        sql,
+        [noteId, subjectId, userEmail, cleanTitle, cleanContent, noteType],
+        (error, result) => {
+            if (error) {
+                console.error("Create note error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to create note."
+                });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: "Note created successfully.",
+                note: {
+                    id: noteId,
+                    title: cleanTitle,
+                    content: cleanContent,
+                    note_type: noteType
+                }
+            });
+        }
+    );
+});
+
+// PUT /api/subjects/notes/:noteId - Update note
+app.put("/api/subjects/notes/:noteId", verifyToken, (req, res) => {
+    const noteId = String(req.params.noteId).trim();
+    const userEmail = req.user.email;
+    const { title, content } = req.body;
+
+    if (!title || title.trim() === "") {
+        return res.status(400).json({
+            success: false,
+            message: "Note title is required."
+        });
+    }
+
+    const cleanTitle = String(title).trim().substring(0, 255);
+    const cleanContent = content ? String(content).trim() : "";
+
+    const sql = `
+        UPDATE subject_notes
+        SET title = ?, content = ?
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(
+        sql,
+        [cleanTitle, cleanContent, noteId, userEmail],
+        (error, result) => {
+            if (error) {
+                console.error("Update note error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to update note."
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Note not found."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Note updated successfully."
+            });
+        }
+    );
+});
+
+// DELETE /api/subjects/notes/:noteId - Delete note
+app.delete("/api/subjects/notes/:noteId", verifyToken, (req, res) => {
+    const noteId = String(req.params.noteId).trim();
+    const userEmail = req.user.email;
+
+    const sql = `
+        DELETE FROM subject_notes
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(sql, [noteId, userEmail], (error, result) => {
+        if (error) {
+            console.error("Delete note error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to delete note."
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Note not found."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Note deleted successfully."
+        });
+    });
+});
+
+// ============================================================
+// SETTINGS ENDPOINTS
+// ============================================================
+
+// GET /api/settings - Get user settings
+app.get("/api/settings", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT theme, language, start_page, notification_sound, notification_desktop, notification_email, task_notifications, group_notifications
+        FROM user_settings
+        WHERE user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(sql, [userEmail], (error, results) => {
+        if (error) {
+            console.error("Get settings error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch settings."
+            });
+        }
+
+        if (results.length === 0) {
+            // Create default settings if not exists
+            const insertSql = `
+                INSERT INTO user_settings (id, user_email, theme, language, start_page)
+                VALUES (?, ?, 'light', 'en', 'dashboard')
+            `;
+            db.query(insertSql, [crypto.randomBytes(8).toString("hex"), userEmail], () => {
+                return res.status(200).json({
+                    success: true,
+                    settings: {
+                        theme: 'light',
+                        language: 'en',
+                        start_page: 'dashboard',
+                        notification_sound: 1,
+                        notification_desktop: 1,
+                        notification_email: 0,
+                        task_notifications: 1,
+                        group_notifications: 1
+                    }
+                });
+            });
+        } else {
+            return res.status(200).json({
+                success: true,
+                settings: results[0]
+            });
+        }
+    });
+});
+
+// PUT /api/settings - Update user settings
+app.put("/api/settings", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const { theme, language, start_page, notification_sound, notification_desktop, notification_email, task_notifications, group_notifications } = req.body;
+
+    const cleanTheme = theme ? String(theme).trim().substring(0, 50) : 'light';
+    const cleanLanguage = language ? String(language).trim().substring(0, 20) : 'en';
+    const cleanStartPage = start_page ? String(start_page).trim().substring(0, 50) : 'dashboard';
+
+    const sql = `
+        UPDATE user_settings
+        SET theme = ?, language = ?, start_page = ?, notification_sound = ?, notification_desktop = ?, notification_email = ?, task_notifications = ?, group_notifications = ?
+        WHERE user_email = ?
+    `;
+
+    db.query(
+        sql,
+        [
+            cleanTheme,
+            cleanLanguage,
+            cleanStartPage,
+            notification_sound ? 1 : 0,
+            notification_desktop ? 1 : 0,
+            notification_email ? 1 : 0,
+            task_notifications ? 1 : 0,
+            group_notifications ? 1 : 0,
+            userEmail
+        ],
+        (error, result) => {
+            if (error) {
+                console.error("Update settings error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to update settings."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Settings updated successfully."
+            });
+        }
+    );
+});
+
+// ============================================================
+// GROUP FILES ENDPOINTS
+// ============================================================
+
+// GET /api/groups/:groupId/files - Get all files for group
+app.get("/api/groups/:groupId/files", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId).trim();
+    const userEmail = req.user.email;
+
+    // Verify user is group member
+    const memberCheckSQL = `
+        SELECT 1 FROM group_members
+        WHERE group_id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const fileSQL = `
+            SELECT id, file_name, file_size, file_type, uploaded_by, uploaded_at
+            FROM group_files
+            WHERE group_id = ?
+            ORDER BY uploaded_at DESC
+        `;
+
+        db.query(fileSQL, [groupId], (error, files) => {
+            if (error) {
+                console.error("Get group files error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to fetch files."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                files: files || []
+            });
+        });
+    });
+});
+
+// DELETE /api/groups/:groupId/files/:fileId - Delete group file
+app.delete("/api/groups/:groupId/files/:fileId", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId).trim();
+    const fileId = String(req.params.fileId).trim();
+    const userEmail = req.user.email;
+
+    // Verify user is group member
+    const memberCheckSQL = `
+        SELECT 1 FROM group_members
+        WHERE group_id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const deleteSQL = `
+            DELETE FROM group_files
+            WHERE id = ? AND group_id = ?
+            LIMIT 1
+        `;
+
+        db.query(deleteSQL, [fileId, groupId], (error, result) => {
+            if (error) {
+                console.error("Delete group file error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to delete file."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "File deleted successfully."
+            });
+        });
+    });
+});
+
+// ============================================================
+// FILE UPLOAD ENDPOINTS
+// ============================================================
+
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = crypto.randomBytes(8).toString("hex") + path.extname(file.originalname);
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
+    fileFilter: (req, file, cb) => {
+        // Allowed file types for subjects
+        const allowedMimes = ["application/pdf", "image/jpeg", "image/png", "text/plain", "application/msword"];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("File type not allowed"));
+        }
+    }
+});
+
+// POST /api/subjects/:subjectId/notes/:noteId/upload - Upload file to subject note
+app.post("/api/subjects/:subjectId/notes/:noteId/upload", verifyToken, upload.single("file"), (req, res) => {
+    const userEmail = req.user.email;
+    const subjectId = String(req.params.subjectId).trim();
+    const noteId = String(req.params.noteId).trim();
+
+    if (!req.file) {
+        return res.status(400).json({
+            success: false,
+            message: "No file uploaded."
+        });
+    }
+
+    // Verify user owns the subject
+    const verifySQL = `
+        SELECT id FROM subjects
+        WHERE id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(verifySQL, [subjectId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            fs.unlinkSync(req.file.path);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const fileId = crypto.randomBytes(8).toString("hex");
+        const fileSQL = `
+            INSERT INTO subject_note_files
+            (id, note_id, file_name, file_path, file_size, file_type, uploaded_at, uploaded_by)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+        `;
+
+        db.query(
+            fileSQL,
+            [fileId, noteId, req.file.originalname, req.file.filename, req.file.size, req.file.mimetype, userEmail],
+            (error, result) => {
+                if (error) {
+                    fs.unlinkSync(req.file.path);
+                    console.error("Upload file database error:", error.message);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Unable to save file metadata."
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "File uploaded successfully.",
+                    file: {
+                        id: fileId,
+                        name: req.file.originalname,
+                        size: req.file.size,
+                        uploadedAt: new Date()
+                    }
+                });
+            }
+        );
+    });
+});
+
+// GET /api/subjects/notes/:noteId/files - Get files for a note
+app.get("/api/subjects/notes/:noteId/files", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const noteId = String(req.params.noteId).trim();
+
+    const fileSQL = `
+        SELECT f.id, f.file_name, f.file_size, f.file_type, f.uploaded_at
+        FROM subject_note_files f
+        JOIN subject_notes n ON f.note_id = n.id
+        JOIN subjects s ON n.subject_id = s.id
+        WHERE n.id = ? AND s.user_email = ?
+        ORDER BY f.uploaded_at DESC
+    `;
+
+    db.query(fileSQL, [noteId, userEmail], (error, files) => {
+        if (error) {
+            console.error("Get note files error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch files."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            files: files || []
+        });
+    });
+});
+
+// DELETE /api/subjects/notes/:noteId/files/:fileId - Delete file from note
+app.delete("/api/subjects/notes/:noteId/files/:fileId", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const noteId = String(req.params.noteId).trim();
+    const fileId = String(req.params.fileId).trim();
+
+    // Verify user owns the subject
+    const verifySQL = `
+        SELECT f.file_path FROM subject_note_files f
+        JOIN subject_notes n ON f.note_id = n.id
+        JOIN subjects s ON n.subject_id = s.id
+        WHERE f.id = ? AND n.id = ? AND s.user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(verifySQL, [fileId, noteId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const filePath = path.join(uploadDir, results[0].file_path);
+        
+        const deleteSQL = `
+            DELETE FROM subject_note_files
+            WHERE id = ? AND note_id = ?
+            LIMIT 1
+        `;
+
+        db.query(deleteSQL, [fileId, noteId], (error, result) => {
+            if (error) {
+                console.error("Delete file database error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to delete file."
+                });
+            }
+
+            // Delete physical file
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "File deleted successfully."
+            });
+        });
+    });
+});
+
+// POST /api/groups/:groupId/files/upload - Upload file to group
+app.post("/api/groups/:groupId/files/upload", verifyToken, upload.single("file"), (req, res) => {
+    const userEmail = req.user.email;
+    const groupId = String(req.params.groupId).trim();
+
+    if (!req.file) {
+        return res.status(400).json({
+            success: false,
+            message: "No file uploaded."
+        });
+    }
+
+    // Verify user is group member
+    const memberCheckSQL = `
+        SELECT 1 FROM group_members
+        WHERE group_id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            fs.unlinkSync(req.file.path);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const fileId = crypto.randomBytes(8).toString("hex");
+        const fileSQL = `
+            INSERT INTO group_files
+            (id, group_id, file_name, file_path, file_size, file_type, uploaded_by, uploaded_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        `;
+
+        db.query(
+            fileSQL,
+            [fileId, groupId, req.file.originalname, req.file.filename, req.file.size, req.file.mimetype, userEmail],
+            (error, result) => {
+                if (error) {
+                    fs.unlinkSync(req.file.path);
+                    console.error("Upload group file database error:", error.message);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Unable to save file metadata."
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "File uploaded successfully.",
+                    file: {
+                        id: fileId,
+                        name: req.file.originalname,
+                        size: req.file.size,
+                        uploadedAt: new Date()
+                    }
+                });
+            }
+        );
+    });
+});
+
+// GET /api/groups/:groupId/files/:fileId/download - Download group file
+app.get("/api/groups/:groupId/files/:fileId/download", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const groupId = String(req.params.groupId).trim();
+    const fileId = String(req.params.fileId).trim();
+
+    // Verify user is group member
+    const memberCheckSQL = `
+        SELECT 1 FROM group_members
+        WHERE group_id = ? AND user_email = ?
+        LIMIT 1
+    `;
+
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied."
+            });
+        }
+
+        const fileSQL = `
+            SELECT file_path, file_name FROM group_files
+            WHERE id = ? AND group_id = ?
+            LIMIT 1
+        `;
+
+        db.query(fileSQL, [fileId, groupId], (error, results) => {
+            if (error || results.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "File not found."
+                });
+            }
+
+            const filePath = path.join(uploadDir, results[0].file_path);
+            
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({
+                    success: false,
+                    message: "File not found on disk."
+                });
+            }
+
+            res.download(filePath, results[0].file_name);
+        });
+    });
+});
+
+// ============================================================
+// GAMES ENDPOINTS
+// ============================================================
+
+// POST /api/games/:gameName/score - Submit game score
+app.post("/api/games/:gameName/score", verifyToken, (req, res) => {
+    const gameName = String(req.params.gameName).trim();
+    const userEmail = req.user.email;
+    const { score, points, groupId } = req.body;
+
+    if (!score && score !== 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Score is required."
+        });
+    }
+
+    const cleanScore = Number(score) || 0;
+    const cleanPoints = Number(points) || 0;
+
+    // If group game
+    if (groupId) {
+        const cleanGroupId = String(groupId).trim();
+        
+        // Verify user is group member
+        const memberCheckSQL = `
+            SELECT 1 FROM group_members
+            WHERE group_id = ? AND user_email = ?
+            LIMIT 1
+        `;
+
+        db.query(memberCheckSQL, [cleanGroupId, userEmail], (error, results) => {
+            if (error || results.length === 0) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Access denied."
+                });
+            }
+
+            const gameResultId = crypto.randomBytes(8).toString("hex");
+            const insertSQL = `
+                INSERT INTO group_game_results (id, group_id, user_email, game_name, score, points)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+
+            db.query(
+                insertSQL,
+                [gameResultId, cleanGroupId, userEmail, gameName, cleanScore, cleanPoints],
+                (error, result) => {
+                    if (error) {
+                        console.error("Insert game result error:", error.message);
+                        return res.status(500).json({
+                            success: false,
+                            message: "Unable to save game score."
+                        });
+                    }
+
+                    // Create notification for group
+                    const groupSQL = `SELECT name FROM groups WHERE id = ?`;
+                    db.query(groupSQL, [cleanGroupId], (error, groupResults) => {
+                        if (!error && groupResults.length > 0) {
+                            const groupName = groupResults[0].name;
+                            createNotification(
+                                userEmail,
+                                'game_score',
+                                'Game Score Recorded',
+                                `You scored ${cleanScore} points in ${gameName} (${cleanPoints} group points)`,
+                                gameResultId,
+                                'game'
+                            );
+                        }
+                    });
+
+                    return res.status(201).json({
+                        success: true,
+                        message: "Game score saved successfully.",
+                        gameResult: {
+                            id: gameResultId,
+                            score: cleanScore,
+                            points: cleanPoints
+                        }
+                    });
+                }
+            );
+        });
+    } else {
+        // Personal game score - just respond with success
+        return res.status(201).json({
+            success: true,
+            message: "Game score recorded.",
+            score: cleanScore
+        });
+    }
+});
+
+// GET /api/games/:gameName/scores - Get game scores
+app.get("/api/games/:gameName/scores", verifyToken, (req, res) => {
+    const gameName = String(req.params.gameName).trim();
+    const userEmail = req.user.email;
+    const { groupId } = req.query;
+
+    if (groupId) {
+        const cleanGroupId = String(groupId).trim();
+        
+        // Verify user is group member
+        const memberCheckSQL = `
+            SELECT 1 FROM group_members
+            WHERE group_id = ? AND user_email = ?
+            LIMIT 1
+        `;
+
+        db.query(memberCheckSQL, [cleanGroupId, userEmail], (error, results) => {
+            if (error || results.length === 0) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Access denied."
+                });
+            }
+
+            const scoreSQL = `
+                SELECT id, user_email, score, points, played_at
+                FROM group_game_results
+                WHERE group_id = ? AND game_name = ?
+                ORDER BY score DESC
+                LIMIT 10
+            `;
+
+            db.query(scoreSQL, [cleanGroupId, gameName], (error, scores) => {
+                if (error) {
+                    console.error("Get game scores error:", error.message);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Unable to fetch scores."
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    scores: scores || []
+                });
+            });
+        });
+    } else {
+        // Return empty for personal games (not stored in DB)
+        return res.status(200).json({
+            success: true,
+            scores: []
+        });
+    }
+});
+
+// ============================================================
+// BADGES & STREAKS ENDPOINTS
+// ============================================================
+
+// GET /api/user/badges - Get user badges
+app.get("/api/user/badges", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT badge_name, badge_type, earned_at
+        FROM user_badges
+        WHERE user_email = ?
+        ORDER BY earned_at DESC
+    `;
+
+    db.query(sql, [userEmail], (error, results) => {
+        if (error) {
+            console.error("Get badges error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch badges."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            badges: results || []
+        });
+    });
+});
+
+// POST /api/user/badges - Award badge to user
+app.post("/api/user/badges", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const { badgeName, badgeType } = req.body;
+
+    if (!badgeName || !badgeType) {
+        return res.status(400).json({
+            success: false,
+            message: "Badge name and type are required."
+        });
+    }
+
+    const badgeId = crypto.randomBytes(8).toString("hex");
+    const cleanBadgeName = String(badgeName).trim().substring(0, 100);
+    const cleanBadgeType = String(badgeType).trim().substring(0, 50);
+
+    const sql = `
+        INSERT INTO user_badges (id, user_email, badge_name, badge_type)
+        VALUES (?, ?, ?, ?)
+    `;
+
+    db.query(
+        sql,
+        [badgeId, userEmail, cleanBadgeName, cleanBadgeType],
+        (error, result) => {
+            if (error) {
+                console.error("Award badge error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to award badge."
+                });
+            }
+
+            createNotification(
+                userEmail,
+                'badge',
+                'Badge Earned!',
+                `You earned the "${cleanBadgeName}" badge!`,
+                badgeId,
+                'badge'
+            );
+
+            return res.status(201).json({
+                success: true,
+                message: "Badge awarded successfully."
+            });
+        }
+    );
+});
+
+// GET /api/user/streaks - Get user streaks
+app.get("/api/user/streaks", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const sql = `
+        SELECT activity_type, current_streak, best_streak, last_activity_date
+        FROM user_streaks
+        WHERE user_email = ?
+    `;
+
+    db.query(sql, [userEmail], (error, results) => {
+        if (error) {
+            console.error("Get streaks error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to fetch streaks."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            streaks: results || []
+        });
+    });
+});
+
+// PATCH /api/user/streaks/:activityType - Update streak
+app.patch("/api/user/streaks/:activityType", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const activityType = String(req.params.activityType).trim();
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check if streak exists
+    const checkSQL = `
+        SELECT id, current_streak, last_activity_date
+        FROM user_streaks
+        WHERE user_email = ? AND activity_type = ?
+        LIMIT 1
+    `;
+
+    db.query(checkSQL, [userEmail, activityType], (error, results) => {
+        if (error) {
+            console.error("Check streak error:", error.message);
+            return res.status(500).json({
+                success: false,
+                message: "Unable to update streak."
+            });
+        }
+
+        if (results.length === 0) {
+            // Create new streak
+            const streakId = crypto.randomBytes(8).toString("hex");
+            const insertSQL = `
+                INSERT INTO user_streaks (id, user_email, activity_type, current_streak, best_streak, last_activity_date)
+                VALUES (?, ?, ?, 1, 1, ?)
+            `;
+
+            db.query(insertSQL, [streakId, userEmail, activityType, today], (error) => {
+                if (error) {
+                    console.error("Create streak error:", error.message);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Unable to create streak."
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Streak created.",
+                    streak: {
+                        activity_type: activityType,
+                        current_streak: 1,
+                        best_streak: 1
+                    }
+                });
+            });
+        } else {
+            const streak = results[0];
+            const lastDate = streak.last_activity_date ? new Date(streak.last_activity_date).toISOString().split('T')[0] : null;
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+            let newStreak = streak.current_streak;
+            let newBest = streak.current_streak;
+
+            // If last activity was yesterday or today, increment streak
+            if (lastDate === today) {
+                // Already updated today
+                newStreak = streak.current_streak;
+            } else if (lastDate === yesterday) {
+                // Continue streak
+                newStreak = streak.current_streak + 1;
+                newBest = Math.max(newStreak, streak.best_streak || 0);
+            } else {
+                // Streak broken, restart
+                newStreak = 1;
+            }
+
+            const updateSQL = `
+                UPDATE user_streaks
+                SET current_streak = ?, best_streak = ?, last_activity_date = ?
+                WHERE user_email = ? AND activity_type = ?
+            `;
+
+            db.query(updateSQL, [newStreak, newBest, today, userEmail, activityType], (error) => {
+                if (error) {
+                    console.error("Update streak error:", error.message);
+                    return res.status(500).json({
+                        success: false,
+                        message: "Unable to update streak."
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Streak updated.",
+                    streak: {
+                        activity_type: activityType,
+                        current_streak: newStreak,
+                        best_streak: newBest
+                    }
+                });
+            });
+        }
+    });
+});
+
+// ============================================================
 // GLOBAL ERROR HANDLER
 // ============================================================
 
@@ -2059,15 +3410,19 @@ app.use((err, req, res, next) => {
 });
 
 // ============================================================
-// START SERVER
+// START SERVER (LOCAL DEVELOPMENT ONLY)
 // ============================================================
 
-app.listen(PORT, () => {
-    console.log(
-        `DueMate server running on http://localhost:${PORT}`
-    );
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(
+            `DueMate server running on http://localhost:${PORT}`
+        );
 
-    console.log(
-        "Waiting for frontend requests..."
-    );
-});
+        console.log(
+            "Waiting for frontend requests..."
+        );
+    });
+}
+
+module.exports = app;

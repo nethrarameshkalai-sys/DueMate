@@ -68,13 +68,28 @@
         const link = function (page) {
             return '<a href="' + page[0] + '" class="' + (page[0] === current ? "active" : "") + '"><span class="nav-icon">' + page[2] + "</span>" + page[1] + "</a>";
         };
+        const langButton = '<button type="button" data-shell-language-toggle style="width: 100%; margin-top: 10px; padding: 8px; background: var(--purple); color: white; border: none; border-radius: 8px; cursor: pointer;"><span class="nav-icon">🌐</span> <span id="lang-toggle-text">English</span></button>';
         drawer.innerHTML = '<h2>Due<span>Mate</span></h2><div class="app-shell-section-title">Main</div><nav>' +
             mainPages.map(link).join("") +
             '</nav><div class="app-shell-section-title">Account</div><nav>' +
             accountPages.map(link).join("") +
-            '<button type="button" data-shell-logout><span class="nav-icon">🚪</span> Logout</button></nav>';
+            '<button type="button" data-shell-logout><span class="nav-icon">🚪</span> Logout</button>' +
+            langButton +
+            '</nav>';
         document.body.append(overlay, drawer);
         overlay.addEventListener("click", closeMenu);
+        
+        // Language toggle
+        drawer.querySelector("[data-shell-language-toggle]").addEventListener("click", function () {
+            const currentLang = window.dueMateSettings ? window.dueMateSettings.getSetting("language") : "en";
+            const newLang = currentLang === "en" ? "ta" : "en";
+            if (window.dueMateSettings) {
+                window.dueMateSettings.setSetting("language", newLang);
+                window.dueMateSettings.applyLanguage();
+                document.getElementById("lang-toggle-text").textContent = newLang === "en" ? "English" : "தமிழ்";
+            }
+        });
+        
         drawer.querySelector("[data-shell-logout]").addEventListener("click", function () {
             sessionStorage.clear();
             location.href = "index.html";
@@ -181,3 +196,141 @@
     });
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 })();
+
+/*
+   JWT Authentication Helper
+   
+   Use this function to make authenticated API calls:
+   const headers = window.getAuthHeaders();
+   
+   fetch(url, {
+       method: "GET",
+       headers: headers
+   })
+*/
+window.getAuthHeaders = function() {
+    const token = sessionStorage.getItem("duemate-token");
+    
+    const headers = {
+        "Content-Type": "application/json"
+    };
+    
+    if (token) {
+        headers["Authorization"] = "Bearer " + token;
+    }
+    
+    return headers;
+};
+
+/*
+   Authenticated Fetch Wrapper
+   
+   Use this to make API calls with automatic JWT authentication:
+   window.authenticatedFetch(url, options)
+   
+   Example:
+   const response = await window.authenticatedFetch(
+       "http://localhost:5000/api/tasks",
+       { method: "GET" }
+   );
+*/
+window.authenticatedFetch = function(url, options = {}) {
+    if (!options.headers) {
+        options.headers = {};
+    }
+    
+    // Merge with auth headers
+    const authHeaders = window.getAuthHeaders();
+    options.headers = { ...authHeaders, ...options.headers };
+    
+    return fetch(url, options).then(function(response) {
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+            return Promise.reject(new Error("Session expired. Please login again."));
+        }
+        return response;
+    });
+};
+
+/*
+   Notification Helpers
+   
+   Fetch and manage notifications from backend
+*/
+window.fetchNotifications = async function() {
+    try {
+        const response = await window.authenticatedFetch(
+            window.API_URL + "/api/notifications"
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.notifications || [];
+    } catch (error) {
+        console.warn("Unable to fetch notifications:", error);
+        return [];
+    }
+};
+
+window.markNotificationAsRead = async function(notificationId) {
+    try {
+        await window.authenticatedFetch(
+            window.API_URL + "/api/notifications/" + notificationId + "/read",
+            { method: "PATCH" }
+        );
+    } catch (error) {
+        console.warn("Unable to mark notification as read:", error);
+    }
+};
+
+window.deleteNotification = async function(notificationId) {
+    try {
+        await window.authenticatedFetch(
+            window.API_URL + "/api/notifications/" + notificationId,
+            { method: "DELETE" }
+        );
+    } catch (error) {
+        console.warn("Unable to delete notification:", error);
+    }
+};
+
+/*
+   Settings Helpers
+   
+   Sync settings with backend
+*/
+window.fetchUserSettings = async function() {
+    try {
+        const response = await window.authenticatedFetch(
+            window.API_URL + "/api/settings"
+        );
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data.settings || null;
+    } catch (error) {
+        console.warn("Unable to fetch settings:", error);
+        return null;
+    }
+};
+
+window.updateUserSettings = async function(settings) {
+    try {
+        const response = await window.authenticatedFetch(
+            window.API_URL + "/api/settings",
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(settings)
+            }
+        );
+        if (!response.ok) return false;
+        return true;
+    } catch (error) {
+        console.warn("Unable to update settings:", error);
+        return false;
+    }
+};
+

@@ -1,0 +1,37 @@
+# Netlify Configuration for DueMate Frontend
+
+[build]
+  # Build command (no build needed for static site)
+  command = "echo 'Static files ready'"
+  
+  # Directory to publish
+  publish = "frontend"
+
+[[redirects]]
+  # Redirect all routes to index.html for SPA routing compatibility
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[env]
+  # Netlify environment variables
+  [env.production]
+    VITE_API_URL = "https://your-backend-domain.com"
+  
+  [env.staging]
+    VITE_API_URL = "https://staging-backend.your-domain.com"
+
+[functions]
+  # No serverless functions required - backend is separate
+
+[headers]
+  [[headers.values]]
+    # Cache headers
+    [headers.values.headers]
+      Cache-Control = "public, max-age=3600"
+  
+  [[headers.values]]
+    # For API calls - no cache
+    for = "/api/*"
+    [headers.values.headers]
+      Cache-Control = "no-cache, no-store, must-revalidate"

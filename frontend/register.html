@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="DueMate - Student Registration">
     <title>DueMate - Create Account</title>
+    <script src="config.js"></script>
 
     <style>
         /* =========================================================
@@ -2064,11 +2065,10 @@
     <script>
 
         /* =========================================================
-           BACKEND CONFIGURATION
+          BACKEND CONFIGURATION
         ========================================================= */
 
-        const API_BASE_URL =
-            "https://due-mate-backend.vercel.app";
+        const API_BASE_URL = window.API_BASE_URL || window.API_BASE || "http://localhost:5000";
 
 
         /* =========================================================

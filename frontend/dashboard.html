@@ -11,6 +11,8 @@
     >
 
     <title>DueMate - Dashboard</title>
+    <script src="config.js"></script>
+    <script src="settings-manager.js"></script>
 
     <style>
 
@@ -4163,14 +4165,10 @@
             try {
 
                 const response =
-                    await fetch(
-                        "https://due-mate-backend.vercel.app/api/tasks?user_email=" +
-                        encodeURIComponent(email),
+                    await window.authenticatedFetch(
+                        (window.API_BASE || "http://localhost:5000") + "/api/tasks",
                         {
                             method: "GET",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
                             cache: "no-store"
                         }
                     );

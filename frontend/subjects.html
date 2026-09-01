@@ -11,6 +11,7 @@
     >
 
     <title>DueMate - Subjects</title>
+    <script src="config.js"></script>`n    <script src="settings-manager.js"></script>
 
 
     <style>
@@ -3308,7 +3309,7 @@
            LOAD SUBJECTS
            ===================================================== */
 
-        function loadSubjects() {
+        async function loadSubjects() {
 
             const storageKey = getSubjectStorageKey();
 
@@ -3318,7 +3319,26 @@
             }
 
             try {
+                // Try to fetch from backend first
+                if (window.authenticatedFetch && window.API_URL) {
+                    try {
+                        const response = await window.authenticatedFetch(
+                            window.API_URL + "/api/subjects"
+                        );
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && Array.isArray(data.subjects)) {
+                                subjects = data.subjects;
+                                localStorage.setItem(storageKey, JSON.stringify(subjects));
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn("Backend subjects fetch failed, using localStorage:", error);
+                    }
+                }
 
+                // Fallback to localStorage
                 const stored =
                     localStorage.getItem(
                         storageKey

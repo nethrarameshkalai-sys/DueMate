@@ -16,6 +16,7 @@
     >
 
     <title>DueMate - Profile</title>
+    <script src="config.js"></script>
 
 
     <style>
@@ -3642,7 +3643,7 @@
             }
 
             try {
-                const response = await fetch(`${"https://due-mate-backend.vercel.app"}/api/user/profile?email=${encodeURIComponent(userEmail)}`);
+                const response = await window.authenticatedFetch(`${window.API_BASE || "http://localhost:5000"}/api/user/profile`);
                 const raw = await response.text();
                 let data = {};
 
@@ -3834,13 +3835,9 @@
             saveProfileBtn.textContent = "Saving...";
 
             try {
-                const response = await fetch(`${"https://due-mate-backend.vercel.app"}/api/user/profile`, {
+                const response = await window.authenticatedFetch(`${window.API_BASE || "http://localhost:5000"}/api/user/profile`, {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
                     body: JSON.stringify({
-                        email: userEmail,
                         name: newName,
                         mobile: mobileValue,
                         college: collegeValue,

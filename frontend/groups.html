@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>DueMate - Groups</title>
+    <script src="config.js"></script>`n    <script src="settings-manager.js"></script>
 
     <style>
         /* =====================================================
@@ -1977,6 +1978,40 @@
 
             </div>
 
+
+            <div class="summary-card">
+
+                <div class="summary-icon">
+                    🎮
+                </div>
+
+                <div class="summary-value" id="challengeCount">
+                    0
+                </div>
+
+                <div class="summary-label">
+                    Active Challenges
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon">
+                    🏆
+                </div>
+
+                <div class="summary-value" id="pointsCount">
+                    0
+                </div>
+
+                <div class="summary-label">
+                    My Points
+                </div>
+
+            </div>
+
         </section>
 
 
@@ -3116,7 +3151,7 @@
 
     <script>
 
-        const GROUPS_API = "https://due-mate-backend.vercel.app";
+        const GROUPS_API = window.API_BASE || window.GROUPS_API || "http://localhost:5000";
         let groups = [];
 
 
@@ -3173,7 +3208,7 @@
             }
 
             try {
-                const response = await fetch(`${GROUPS_API}/api/groups?user_email=${encodeURIComponent(email)}`);
+                const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups`);
                 const data = await response.json();
 
                 if (!response.ok) throw new Error(data.message || "Unable to load groups.");
@@ -3197,7 +3232,7 @@
 
 
         async function loadJoinRequests() {
-            const response = await fetch(`${GROUPS_API}/api/groups/requests?user_email=${encodeURIComponent(getGroupUserEmail())}`);
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/requests`);
             const data = await response.json();
             const container = document.getElementById("requestList");
             const requests = response.ok && Array.isArray(data.requests) ? data.requests : [];
@@ -3209,7 +3244,7 @@
 
 
         async function processJoinRequest(requestId, action) {
-            const response = await fetch(`${GROUPS_API}/api/groups/requests/${encodeURIComponent(requestId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_email: getGroupUserEmail(), action }) });
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/requests/${encodeURIComponent(requestId)}`, { method: "PATCH", body: JSON.stringify({ action }) });
             const data = await response.json();
             showToast(data.message || "Unable to process request.");
             if (response.ok) await loadGroups();
@@ -3224,11 +3259,9 @@
             const purpose = prompt("Group purpose", group.purpose);
             if (!name || !purpose) return;
 
-            const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(id)}`, {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(id)}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    user_email: getGroupUserEmail(),
                     name: name.trim(),
                     purpose: purpose.trim(),
                     minimum_members: group.minimum_members,
@@ -3249,10 +3282,8 @@
             const group = groups.find(item => String(item.id) === String(id));
             if (!group || !confirm(`Delete "${group.name}"?`)) return;
 
-            const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(id)}`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_email: getGroupUserEmail() })
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(id)}`, {
+                method: "DELETE"
             });
             const data = await response.json();
             if (!response.ok) {
@@ -3265,10 +3296,9 @@
 
 
         async function joinGroup(code) {
-            const response = await fetch(`${GROUPS_API}/api/groups/join`, {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/join`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_email: getGroupUserEmail(), join_code: code })
+                body: JSON.stringify({ join_code: code })
             });
             const data = await response.json();
             showToast(data.message || "Unable to join group.");
@@ -3318,21 +3348,17 @@
             const date =
                 new Date();
 
-            const dateElement = document.getElementById(
+            document.getElementById(
                 "currentDate"
-            );
-
-            if (dateElement) {
-                dateElement.textContent =
-                    date.toLocaleDateString(
-                        undefined,
-                        {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric"
-                        }
-                    );
-            }
+            ).textContent =
+                date.toLocaleDateString(
+                    undefined,
+                    {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                    }
+                );
         }
 
 
@@ -3431,11 +3457,9 @@
                     }
 
 
-                    const response = await fetch(`${GROUPS_API}/api/groups`, {
+                    const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            user_email: getGroupUserEmail(),
                             name,
                             purpose,
                             minimum_members: min,
@@ -3467,7 +3491,7 @@
 
         async function openWorkspace(groupId) {
 
-            const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/workspace?user_email=${encodeURIComponent(getGroupUserEmail())}`);
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/workspace`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -3513,7 +3537,7 @@
 
         async function leaveGroup(groupId) {
             if (!confirm("Leave this group?")) return;
-            const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(getGroupUserEmail())}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_email: getGroupUserEmail() }) });
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(getGroupUserEmail())}`, { method: "DELETE" });
             const data = await response.json();
             showToast(data.message || "Unable to leave group.");
             if (response.ok) await loadGroups();
@@ -3524,7 +3548,7 @@
             if (!currentGroupId) return;
             const rules = prompt("Group rules", "Be respectful and use this group for academic purposes.");
             if (!rules) return;
-            const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(currentGroupId)}/rules`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_email: getGroupUserEmail(), rules }) });
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(currentGroupId)}/rules`, { method: "PUT", body: JSON.stringify({ rules }) });
             const data = await response.json();
             showToast(data.message || "Unable to save rules.");
             if (response.ok) await openWorkspace(currentGroupId);
@@ -3538,7 +3562,7 @@
             button.disabled = true;
             setTimeout(async function() {
                 const score = Math.max(1, Math.round(1000 - (performance.now() - start)));
-                const response = await fetch(`${GROUPS_API}/api/groups/${encodeURIComponent(currentGroupId)}/game-results`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_email: getGroupUserEmail(), game_name: "Reaction Test", score }) });
+                const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(currentGroupId)}/game-results`, { method: "POST", body: JSON.stringify({ game_name: "Reaction Test", score }) });
                 const data = await response.json();
                 button.disabled = false;
                 button.textContent = "Play Reaction Test";

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DueMate - Calendar</title>
+<script src="config.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -159,7 +160,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 </div></div>
 
 <script>
-const API_BASE="https://due-mate-backend.vercel.app";
+const API_BASE=window.API_BASE||"http://localhost:5000";
 
 /* =========================
    SAFE USER SESSION
@@ -308,8 +309,8 @@ async function loadCalendarData(){
     }
 
     try{
-        const response=await fetch(
-            `${API_BASE}/api/tasks?user_email=${encodeURIComponent(currentUserEmail)}`
+        const response=await window.authenticatedFetch(
+            `${API_BASE}/api/tasks`
         );
 
         if(!response.ok){
