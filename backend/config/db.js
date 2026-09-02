@@ -247,6 +247,21 @@ function initializeMySQLSchema(db) {
     `);
 
     db.query(`
+        CREATE TABLE IF NOT EXISTS \`group_notes\` (
+            id varchar(100) NOT NULL,
+            group_id varchar(100) NOT NULL,
+            user_email varchar(255) NOT NULL,
+            title varchar(255) NOT NULL,
+            content text NOT NULL,
+            created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_group_notes_group_id (group_id),
+            CONSTRAINT fk_group_notes_group FOREIGN KEY (group_id) REFERENCES \`groups\` (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    db.query(`
         CREATE TABLE IF NOT EXISTS \`user_settings\` (
             id varchar(100) NOT NULL,
             user_email varchar(255) NOT NULL UNIQUE,

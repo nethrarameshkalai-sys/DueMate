@@ -3301,6 +3301,8 @@
                 list.innerHTML = '<div class="empty-message">Unable to load groups. Please make sure the backend is running.</div>';
             }
 
+        }
+
 
         async function loadUserPendingRequests() {
             try {
@@ -3415,10 +3417,9 @@
         async function joinGroup(code) {
             try {
                 // First, find the group by join code
-                const findResponse = await window.authenticatedFetch(`${GROUPS_API}/api/groups`);
+                const findResponse = await window.authenticatedFetch(`${GROUPS_API}/api/groups/by-code?join_code=${encodeURIComponent(code)}`);
                 const groupsData = await findResponse.json();
-                const groups = Array.isArray(groupsData.groups) ? groupsData.groups : [];
-                const targetGroup = groups.find(g => g.join_code === code.toUpperCase());
+                const targetGroup = groupsData.group;
 
                 if (!targetGroup) {
                     showToast("Group not found with this join code.", "error");
@@ -3661,6 +3662,9 @@
                     <div class="workspace-card"><div class="workspace-card-icon">📜</div><h4>Group Rules</h4><p>${escapeHTML(workspace.rules || "No group rules have been added yet.")}</p>${owner ? '<button class="group-action" type="button" onclick="editGroupRules()">Edit Rules</button>' : ""}</div>
                     <div class="workspace-card"><div class="workspace-card-icon">🎮</div><h4>Reaction Challenge</h4><p>Test your reaction speed and earn verified points.</p><button class="group-action" id="reactionGameButton" type="button" onclick="startReactionGame()">Play Game</button></div>
                     ${owner ? `<div class="workspace-card"><div class="workspace-card-icon">⚙️</div><h4>Admin Controls</h4><p>Manage this group and its members.</p><button class="group-action" type="button" onclick="deleteGroup('${escapeJS(group.id)}')">Delete Group</button></div>` : `<div class="workspace-card"><div class="workspace-card-icon">↪</div><h4>Leave Group</h4><p>Remove your membership from this group.</p><button class="group-action" type="button" onclick="leaveGroup('${escapeJS(group.id)}')">Leave Group</button></div>`}
+                    <div class="workspace-card"><div class="workspace-card-icon">📝</div><h4>Shared Tasks</h4><p>Assign and track group academic tasks.</p><button class="group-action" type="button" onclick="showGroupTasks(currentGroupId)">Open Tasks</button></div>
+                    <div class="workspace-card"><div class="workspace-card-icon">📄</div><h4>Shared Files</h4><p>Store and access group materials.</p><button class="group-action" type="button" onclick="showGroupFiles(currentGroupId)">Open Files</button></div>
+                    <div class="workspace-card"><div class="workspace-card-icon">📚</div><h4>Shared Notes</h4><p>Keep lessons and group study notes together.</p><button class="group-action" type="button" onclick="showGroupNotes(currentGroupId)">Open Notes</button></div>
                 </div>
             `;
 
@@ -4086,9 +4090,11 @@
                     html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
                     html += files.map(file => `
                         <div style="background: var(--surface); padding: 12px; border-radius: 8px; border-left: 4px solid var(--blue);">
-                            <div style="font-weight: 500; margin-bottom: 4px;">📄 ${escapeHtml(file.file_name)}</div>
+                            <div style="font-weight: 500; margin-bottom: 4px;">📄 ${escapeHTML(file.file_name)}</div>
                             <small style="color: var(--muted);">Size: ${(file.file_size / 1024).toFixed(1)} KB</small>
-                            <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">Uploaded by: ${escapeHtml(file.uploaded_by)}</div>
+                            <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">Uploaded by: ${escapeHTML(file.uploaded_by)}</div>
+                            <button type="button" class="group-action" onclick="downloadGroupFile('${escapeJS(groupId)}','${escapeJS(file.id)}','${escapeJS(file.file_name)}')">Download</button>
+                            <button type="button" class="reject-btn" onclick="deleteGroupFile('${escapeJS(groupId)}','${escapeJS(file.id)}')">Delete</button>
                         </div>
                     `).join('');
                     html += '</div>';
@@ -4148,7 +4154,74 @@
         }
 
         function showUploadFileModal(groupId) {
-            showToast("File upload feature - click to browse files");
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".pdf,.jpg,.jpeg,.png,.txt,.doc";
+            input.onchange = async () => {
+                if (!input.files.length) return;
+                const formData = new FormData();
+                formData.append("file", input.files[0]);
+                try {
+                    const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/files/upload`, { method: "POST", body: formData });
+                    const data = await response.json();
+                    showToast(data.message || "Unable to upload file.");
+                    if (response.ok) await showGroupFiles(groupId);
+                } catch (error) {
+                    console.error("Upload group file error:", error);
+                    showToast("Unable to upload file.");
+                }
+            };
+            input.click();
+        }
+
+        async function downloadGroupFile(groupId, fileId, fileName) {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/files/${encodeURIComponent(fileId)}/download`);
+            if (!response.ok) { showToast("Unable to download file."); return; }
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function deleteGroupFile(groupId, fileId) {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/files/${encodeURIComponent(fileId)}`, { method: "DELETE" });
+            const data = await response.json();
+            showToast(data.message || "Unable to delete file.");
+            if (response.ok) await showGroupFiles(groupId);
+        }
+
+        async function showGroupNotes(groupId) {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/notes`);
+            const data = await response.json();
+            if (!response.ok) { showToast(data.message || "Unable to load notes."); return; }
+            const notes = data.notes || [];
+            const html = `<div style="padding:15px;max-height:400px;overflow-y:auto"><h4>Shared Notes</h4><button type="button" class="form-btn save-btn" onclick="addGroupNote('${escapeJS(groupId)}')">+ Add Note</button>${notes.length ? notes.map(note => `<article class="request-card"><strong>${escapeHTML(note.title)}</strong><p>${escapeHTML(note.content)}</p><small>By ${escapeHTML(note.author_name)}</small><button type="button" class="reject-btn" onclick="deleteGroupNote('${escapeJS(groupId)}','${escapeJS(note.id)}')">Delete</button></article>`).join("") : '<p class="empty-message">No shared notes yet.</p>'}</div>`;
+            const body = document.querySelector(".workspace-body");
+            const old = body.querySelector('[data-content="group-notes"]');
+            if (old) old.remove();
+            const panel = document.createElement("div");
+            panel.dataset.content = "group-notes";
+            panel.innerHTML = html;
+            body.appendChild(panel);
+        }
+
+        async function addGroupNote(groupId) {
+            const title = prompt("Note title:");
+            const content = prompt("Note content:");
+            if (!title || !content) return;
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/notes`, { method: "POST", body: JSON.stringify({ title, content }) });
+            const data = await response.json();
+            showToast(data.message || "Unable to save note.");
+            if (response.ok) await showGroupNotes(groupId);
+        }
+
+        async function deleteGroupNote(groupId, noteId) {
+            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/${encodeURIComponent(groupId)}/notes/${encodeURIComponent(noteId)}`, { method: "DELETE" });
+            const data = await response.json();
+            showToast(data.message || "Unable to delete note.");
+            if (response.ok) await showGroupNotes(groupId);
         }
 
 

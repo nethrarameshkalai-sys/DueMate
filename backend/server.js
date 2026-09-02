@@ -1331,6 +1331,16 @@ app.post(
 // GROUPS
 // ============================================================
 
+app.get("/api/groups/by-code", verifyToken, (req, res) => {
+    const joinCode = String(req.query.join_code || "").trim().toUpperCase();
+    if (!joinCode) return res.status(400).json({ success: false, message: "Join code is required." });
+    db.query("SELECT id, name, purpose, maximum_members FROM `groups` WHERE join_code = ? LIMIT 1", [joinCode], (error, groups) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to find group right now." });
+        if (!groups.length) return res.status(404).json({ success: false, message: "This group link is invalid." });
+        res.json({ success: true, group: groups[0] });
+    });
+});
+
 app.get("/api/groups", verifyToken, (req, res) => {
     const userEmail = req.user.email;
 
@@ -2781,6 +2791,53 @@ app.get("/api/groups/:groupId/files", verifyToken, (req, res) => {
                 files: files || []
             });
         });
+    });
+});
+
+// GROUP NOTES: members can create, view, edit, and delete shared notes.
+app.get("/api/groups/:groupId/notes", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId).trim();
+    const email = req.user.email;
+    const sql = `SELECT n.id, n.title, n.content, n.user_email, n.created_at, n.updated_at, COALESCE(u.name, n.user_email) AS author_name
+                 FROM group_notes n LEFT JOIN users u ON u.email = n.user_email
+                 WHERE n.group_id = ? AND EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = n.group_id AND m.user_email = ?)
+                 ORDER BY n.updated_at DESC`;
+    db.query(sql, [groupId, email], (error, notes) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to load group notes." });
+        res.json({ success: true, notes });
+    });
+});
+
+app.post("/api/groups/:groupId/notes", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId).trim();
+    const title = String(req.body.title || "").trim();
+    const content = String(req.body.content || "").trim();
+    if (!title || !content) return res.status(400).json({ success: false, message: "Note title and content are required." });
+    const sql = `INSERT INTO group_notes (id, group_id, user_email, title, content)
+                 SELECT ?, ?, ?, ?, ? FROM DUAL WHERE EXISTS (SELECT 1 FROM group_members WHERE group_id = ? AND user_email = ?)`;
+    db.query(sql, [crypto.randomUUID(), groupId, req.user.email, title, content, groupId, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to save group note." });
+        if (!result.affectedRows) return res.status(403).json({ success: false, message: "Group membership required." });
+        res.status(201).json({ success: true, message: "Group note saved." });
+    });
+});
+
+app.put("/api/groups/:groupId/notes/:noteId", verifyToken, (req, res) => {
+    const title = String(req.body.title || "").trim();
+    const content = String(req.body.content || "").trim();
+    if (!title || !content) return res.status(400).json({ success: false, message: "Note title and content are required." });
+    db.query("UPDATE group_notes SET title = ?, content = ? WHERE id = ? AND group_id = ? AND user_email = ?", [title, content, req.params.noteId, req.params.groupId, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to update group note." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Note not found or not owned by you." });
+        res.json({ success: true, message: "Group note updated." });
+    });
+});
+
+app.delete("/api/groups/:groupId/notes/:noteId", verifyToken, (req, res) => {
+    db.query("DELETE FROM group_notes WHERE id = ? AND group_id = ? AND user_email = ?", [req.params.noteId, req.params.groupId, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to delete group note." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Note not found or not owned by you." });
+        res.json({ success: true, message: "Group note deleted." });
     });
 });
 
