@@ -1454,6 +1454,15 @@ app.post("/api/groups/:id/join-request", verifyToken, (req, res) => {
     });
 });
 
+app.get("/api/groups/my-requests", verifyToken, (req, res) => {
+    const userEmail = req.user.email;
+    const sql = `SELECT r.id, r.group_id, r.status, r.created_at, g.name AS group_name FROM group_join_requests r INNER JOIN \`groups\` g ON g.id = r.group_id WHERE r.user_email = ? ORDER BY r.created_at DESC`;
+    db.query(sql, [userEmail], (error, requests) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to load your requests." });
+        return res.json({ success: true, requests });
+    });
+});
+
 app.get("/api/groups/requests", verifyToken, (req, res) => {
     const ownerEmail = req.user.email;
     const sql = `SELECT r.id, r.group_id, r.user_email, r.created_at, g.name AS group_name FROM group_join_requests r INNER JOIN \`groups\` g ON g.id = r.group_id WHERE g.owner_email = ? AND r.status = 'pending' ORDER BY r.created_at DESC`;
@@ -1586,6 +1595,87 @@ app.delete("/api/groups/:id", verifyToken, (req, res) => {
 });
 
 // ============================================================
+// GROUP TASKS ENDPOINTS
+// ============================================================
+
+// POST /api/groups/:groupId/tasks - Add task to group
+app.post("/api/groups/:groupId/tasks", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId || "").trim();
+    const userEmail = req.user.email;
+    const { name, subject, date, priority, description } = req.body;
+
+    if (!name || !String(name).trim()) {
+        return res.status(400).json({ success: false, message: "Task name is required." });
+    }
+
+    if (!date) {
+        return res.status(400).json({ success: false, message: "Task date is required." });
+    }
+
+    // Verify user is group member
+    const memberCheckSQL = `SELECT 1 FROM group_members WHERE group_id = ? AND user_email = ? LIMIT 1`;
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({ success: false, message: "Access denied. You must be a group member." });
+        }
+
+        const taskId = crypto.randomUUID();
+        const cleanName = String(name).trim();
+        const cleanSubject = subject ? String(subject).trim() : null;
+        const cleanDescription = description ? String(description).trim() : null;
+        const cleanPriority = ["low", "medium", "high"].includes(priority) ? priority : "medium";
+
+        const sql = `
+            INSERT INTO tasks (id, user_email, name, subject, task_date, priority, description, group_id, completed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+        `;
+
+        db.query(sql, [taskId, userEmail, cleanName, cleanSubject, date, cleanPriority, cleanDescription, groupId], (error) => {
+            if (error) {
+                console.error("Add group task error:", error.message);
+                return res.status(500).json({ success: false, message: "Unable to add task to group." });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: "Task added to group successfully.",
+                task: { id: taskId, name: cleanName, date, priority: cleanPriority, groupId }
+            });
+        });
+    });
+});
+
+// GET /api/groups/:groupId/tasks - Get all tasks for a group
+app.get("/api/groups/:groupId/tasks", verifyToken, (req, res) => {
+    const groupId = String(req.params.groupId || "").trim();
+    const userEmail = req.user.email;
+
+    // Verify user is group member
+    const memberCheckSQL = `SELECT 1 FROM group_members WHERE group_id = ? AND user_email = ? LIMIT 1`;
+    db.query(memberCheckSQL, [groupId, userEmail], (error, results) => {
+        if (error || results.length === 0) {
+            return res.status(403).json({ success: false, message: "Access denied." });
+        }
+
+        const sql = `
+            SELECT id, user_email, name, subject, task_date, priority, description, completed, created_at
+            FROM tasks
+            WHERE group_id = ?
+            ORDER BY task_date ASC
+        `;
+
+        db.query(sql, [groupId], (error, tasks) => {
+            if (error) {
+                console.error("Get group tasks error:", error.message);
+                return res.status(500).json({ success: false, message: "Unable to fetch group tasks." });
+            }
+
+            return res.json({ success: true, tasks: tasks || [] });
+        });
+    });
+});
+
+// ============================================================
 // TASKS
 // NO TIME FIELD
 // ============================================================
@@ -1600,21 +1690,24 @@ app.get("/api/tasks", verifyToken, (req, res) => {
 
     const sql = `
         SELECT
-            id,
-            user_email,
-            name,
-            subject,
-            task_date,
-            priority,
-            description,
-            completed,
-            created_at,
-            updated_at
-        FROM tasks
-        WHERE user_email = ?
+            t.id,
+            t.user_email,
+            t.name,
+            t.subject,
+            t.task_date,
+            t.priority,
+            t.description,
+            t.completed,
+            t.group_id,
+            g.name AS group_name,
+            t.created_at,
+            t.updated_at
+        FROM tasks t
+        LEFT JOIN \`groups\` g ON t.group_id = g.id
+        WHERE t.user_email = ?
         ORDER BY
-            task_date ASC,
-            id DESC
+            t.task_date ASC,
+            t.id DESC
     `;
 
     db.query(

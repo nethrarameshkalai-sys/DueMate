@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>DueMate - Groups</title>
-    <script src="config.js"></script>`n    <script src="settings-manager.js"></script>
+    <script src="config.js"></script>
+    <script src="settings-manager.js"></script>
 
     <style>
         /* =====================================================
@@ -1792,6 +1793,7 @@
 
 
 <body>
+    <script src="app-shell.js"></script>
 
     <!-- =====================================================
          BACKGROUND
@@ -1883,23 +1885,28 @@
 
 
             <div class="top-actions">
-            <button class="calendar-btn" type="button" onclick="goCalendar()" aria-label="Calendar">
-                📅
-            </button>
+                <div class="top-date" onclick="goCalendar()">
+                    <span>Today</span>
+                    <strong id="currentDate"></strong>
+                </div>
 
-            <button
-                class="notification-btn"
-                type="button"
-                onclick="goNotifications()"
-                aria-label="Notifications">
+                <button class="calendar-btn" type="button" onclick="goCalendar()" aria-label="Calendar">
+                    📅
+                </button>
 
-                🔔
+                <button
+                    class="notification-btn"
+                    type="button"
+                    onclick="goNotifications()"
+                    aria-label="Notifications">
 
-                <span
-                    class="notification-dot">
-                </span>
+                    🔔
 
-            </button>
+                    <span
+                        class="notification-dot">
+                    </span>
+
+                </button>
             </div>
 
         </header>
@@ -2466,6 +2473,40 @@
 
                 </div>
 
+                                    <!-- =============================================
+                                         MY PENDING REQUESTS
+                                    ============================================== -->
+
+                                    <aside class="panel">
+
+                                        <div class="panel-header">
+
+                                            <div>
+
+                                                <h2>
+                                                    My Join Requests 📋
+                                                </h2>
+
+                                                <span>
+                                                    Requests awaiting approval
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div
+                                            class="side-content"
+                                            id="userPendingRequests">
+
+                                            <div class="empty-message">No pending requests.</div>
+
+                                        </div>
+
+                                    </aside>
+
+
 
                 <div class="workspace-grid">
 
@@ -2494,9 +2535,7 @@
 
                     <div
                         class="workspace-card"
-                        onclick="showToast(
-                            'Shared tasks section opened.'
-                        )">
+                        onclick="showGroupTasks(currentGroupId)">
 
                         <div class="workspace-card-icon">
                             📝
@@ -2538,9 +2577,7 @@
 
                     <div
                         class="workspace-card"
-                        onclick="showToast(
-                            'Shared files opened.'
-                        )">
+                        onclick="showGroupFiles(currentGroupId)">
 
                         <div class="workspace-card-icon">
                             📄
@@ -3156,13 +3193,47 @@
 
 
         function getGroupUserEmail() {
-            try {
-                const user = JSON.parse(sessionStorage.getItem("duemate-user") || sessionStorage.getItem("dueMateUser") || "null");
-                return String(user && (user.email || user.user_email) || "").trim().toLowerCase();
+            const candidateKeys = [
+                "duemate-user-email",
+                "userEmail",
+                "duemate-user",
+                "dueMateUser",
+                "loggedInUser"
+            ];
+
+            for (const key of candidateKeys) {
+                const rawValue = sessionStorage.getItem(key);
+
+                if (!rawValue) {
+                    continue;
+                }
+
+                if (key === "duemate-user" || key === "dueMateUser" || key === "loggedInUser") {
+                    try {
+                        const user = JSON.parse(rawValue);
+                        const email = user && (user.email || user.user_email || user.emailId || user.userEmail);
+
+                        if (email) {
+                            return String(email).trim().toLowerCase();
+                        }
+                    }
+                    catch {
+                        const text = String(rawValue).trim();
+                        if (text.includes("@")) {
+                            return text.toLowerCase();
+                        }
+                    }
+
+                    continue;
+                }
+
+                const directEmail = String(rawValue).trim();
+                if (directEmail && !directEmail.startsWith("{")) {
+                    return directEmail.toLowerCase();
+                }
             }
-            catch {
-                return "";
-            }
+
+            return "";
         }
 
 
@@ -3223,13 +3294,45 @@
                 }
 
                 await loadJoinRequests();
+                await loadUserPendingRequests();
             }
             catch (error) {
                 console.error("Load groups error:", error);
                 list.innerHTML = '<div class="empty-message">Unable to load groups. Please make sure the backend is running.</div>';
             }
-        }
 
+
+        async function loadUserPendingRequests() {
+            try {
+                const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/my-requests`);
+                const data = await response.json();
+                const container = document.getElementById("userPendingRequests");
+                
+                if (!container) return;
+                
+                const requests = response.ok && Array.isArray(data.requests) ? data.requests : [];
+                const pendingRequests = requests.filter(r => r.status === 'pending');
+                
+                if (pendingRequests.length === 0) {
+                    container.innerHTML = '<div class="empty-message">No pending requests.</div>';
+                    return;
+                }
+                
+                container.innerHTML = pendingRequests.map(request => `
+                    <div class="request-card">
+                        <div class="request-top">
+                            <div class="request-name">${escapeHTML(request.group_name)}</div>
+                            <div class="request-time">${new Date(request.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div class="request-actions">
+                            <span style="font-size: 0.85em; color: var(--text-muted);">Status: <strong>Pending</strong></span>
+                        </div>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.error("Load user pending requests error:", error);
+            }
+        }
 
         async function loadJoinRequests() {
             const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/requests`);
@@ -3244,10 +3347,24 @@
 
 
         async function processJoinRequest(requestId, action) {
-            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/requests/${encodeURIComponent(requestId)}`, { method: "PATCH", body: JSON.stringify({ action }) });
-            const data = await response.json();
-            showToast(data.message || "Unable to process request.");
-            if (response.ok) await loadGroups();
+            try {
+                const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/requests/${encodeURIComponent(requestId)}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(data.message || `Request ${action}ed successfully!`);
+                    await loadJoinRequests();
+                } else {
+                    showToast(data.message || "Unable to process request.", "error");
+                }
+            } catch (error) {
+                console.error("Process join request error:", error);
+                showToast("Failed to process request.", "error");
+            }
         }
 
 
@@ -3296,13 +3413,40 @@
 
 
         async function joinGroup(code) {
-            const response = await window.authenticatedFetch(`${GROUPS_API}/api/groups/join`, {
-                method: "POST",
-                body: JSON.stringify({ join_code: code })
-            });
-            const data = await response.json();
-            showToast(data.message || "Unable to join group.");
-            if (response.ok) await loadGroups();
+            try {
+                // First, find the group by join code
+                const findResponse = await window.authenticatedFetch(`${GROUPS_API}/api/groups`);
+                const groupsData = await findResponse.json();
+                const groups = Array.isArray(groupsData.groups) ? groupsData.groups : [];
+                const targetGroup = groups.find(g => g.join_code === code.toUpperCase());
+
+                if (!targetGroup) {
+                    showToast("Group not found with this join code.", "error");
+                    return;
+                }
+
+                // Send a join request to the group
+                const response = await window.authenticatedFetch(
+                    `${GROUPS_API}/api/groups/${targetGroup.id}/join-request`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({})
+                    }
+                );
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast("✅ Join request sent! The group admin will review it.");
+                    await loadGroups();
+                } else {
+                    showToast(data.message || "Unable to send join request.", "error");
+                }
+            } catch (error) {
+                console.error("Join group error:", error);
+                showToast("Failed to send join request.", "error");
+            }
         }
 
 
@@ -3345,20 +3489,16 @@
 
         function updateDate() {
 
-            const date =
-                new Date();
+            const date = new Date();
+            const currentDate = document.getElementById("currentDate");
 
-            document.getElementById(
-                "currentDate"
-            ).textContent =
-                date.toLocaleDateString(
-                    undefined,
-                    {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                    }
-                );
+            if (!currentDate) return;
+
+            currentDate.textContent = date.toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
         }
 
 
@@ -3863,6 +4003,156 @@
 
 
         /* =====================================================
+           GROUP TASKS & FILES
+        ===================================================== */
+
+        async function showGroupTasks(groupId) {
+            if (!groupId) {
+                showToast("Please select a group first");
+                return;
+            }
+
+            try {
+                const response = await window.authenticatedFetch(
+                    `${window.API_URL || 'http://localhost:5000'}/api/groups/${groupId}/tasks`
+                );
+
+                if (!response.ok) throw new Error("Failed to load group tasks");
+
+                const data = await response.json();
+                const tasks = data.tasks || [];
+
+                let html = '<div style="padding: 15px; max-height: 400px; overflow-y: auto;">';
+                html += '<h4 style="margin-bottom: 15px;">Group Tasks</h4>';
+                
+                if (tasks.length === 0) {
+                    html += '<p style="color: var(--muted); text-align: center;">No tasks yet. Add one to get started!</p>';
+                } else {
+                    html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                    html += tasks.map(task => `
+                        <div style="background: var(--surface); padding: 12px; border-radius: 8px; border-left: 4px solid var(--mint);">
+                            <div style="font-weight: 500; margin-bottom: 4px;">${escapeHtml(task.name)}</div>
+                            <small style="color: var(--muted);">Due: ${new Date(task.task_date).toLocaleDateString()}</small>
+                            <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">By: ${escapeHtml(task.user_email)}</div>
+                        </div>
+                    `).join('');
+                    html += '</div>';
+                }
+
+                html += '<div style="margin-top: 15px;">';
+                html += '<button type="button" class="form-btn save-btn" onclick="showAddGroupTaskModal(\'' + groupId + '\')" style="width: 100%;">+ Add Task to Group</button>';
+                html += '</div></div>';
+
+                const body = document.querySelector('.workspace-body');
+                if (body) {
+                    const existing = body.querySelector('[data-content="group-tasks"]');
+                    if (existing) existing.remove();
+                    
+                    const div = document.createElement('div');
+                    div.setAttribute('data-content', 'group-tasks');
+                    div.innerHTML = html;
+                    body.appendChild(div);
+                }
+
+                showToast("Group tasks loaded");
+            } catch (error) {
+                console.error("Load group tasks error:", error);
+                showToast("Failed to load group tasks", "error");
+            }
+        }
+
+        async function showGroupFiles(groupId) {
+            if (!groupId) {
+                showToast("Please select a group first");
+                return;
+            }
+
+            try {
+                const response = await window.authenticatedFetch(
+                    `${window.API_URL || 'http://localhost:5000'}/api/groups/${groupId}/files`
+                );
+
+                if (!response.ok) throw new Error("Failed to load group files");
+
+                const data = await response.json();
+                const files = data.files || [];
+
+                let html = '<div style="padding: 15px; max-height: 400px; overflow-y: auto;">';
+                html += '<h4 style="margin-bottom: 15px;">Shared Files</h4>';
+                
+                if (files.length === 0) {
+                    html += '<p style="color: var(--muted); text-align: center;">No files shared yet. Upload one to get started!</p>';
+                } else {
+                    html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                    html += files.map(file => `
+                        <div style="background: var(--surface); padding: 12px; border-radius: 8px; border-left: 4px solid var(--blue);">
+                            <div style="font-weight: 500; margin-bottom: 4px;">📄 ${escapeHtml(file.file_name)}</div>
+                            <small style="color: var(--muted);">Size: ${(file.file_size / 1024).toFixed(1)} KB</small>
+                            <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">Uploaded by: ${escapeHtml(file.uploaded_by)}</div>
+                        </div>
+                    `).join('');
+                    html += '</div>';
+                }
+
+                html += '<div style="margin-top: 15px;">';
+                html += '<button type="button" class="form-btn save-btn" onclick="showUploadFileModal(\'' + groupId + '\')" style="width: 100%;">+ Share File</button>';
+                html += '</div></div>';
+
+                const body = document.querySelector('.workspace-body');
+                if (body) {
+                    const existing = body.querySelector('[data-content="group-files"]');
+                    if (existing) existing.remove();
+                    
+                    const div = document.createElement('div');
+                    div.setAttribute('data-content', 'group-files');
+                    div.innerHTML = html;
+                    body.appendChild(div);
+                }
+
+                showToast("Group files loaded");
+            } catch (error) {
+                console.error("Load group files error:", error);
+                showToast("Failed to load group files", "error");
+            }
+        }
+
+        function showAddGroupTaskModal(groupId) {
+            const taskName = prompt("Enter task name:");
+            if (!taskName) return;
+
+            const taskDate = prompt("Enter task date (YYYY-MM-DD):");
+            if (!taskDate) return;
+
+            addTaskToGroup(groupId, taskName, taskDate);
+        }
+
+        async function addTaskToGroup(groupId, taskName, taskDate) {
+            try {
+                const response = await window.authenticatedFetch(
+                    `${window.API_URL || 'http://localhost:5000'}/api/groups/${groupId}/tasks`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: taskName, date: taskDate, priority: "medium" })
+                    }
+                );
+
+                if (!response.ok) throw new Error("Failed to add task");
+
+                showToast("Task added to group");
+                showGroupTasks(groupId);
+            } catch (error) {
+                console.error("Add group task error:", error);
+                showToast("Failed to add task", "error");
+            }
+        }
+
+        function showUploadFileModal(groupId) {
+            showToast("File upload feature - click to browse files");
+        }
+
+
+        /* =====================================================
            TOAST
         ===================================================== */
 
@@ -4106,7 +4396,5 @@
         animateBackground();
 
     </script>
-
-    <script src="app-shell.js"></script>
 </body>
 </html>

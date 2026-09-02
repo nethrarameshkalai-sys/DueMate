@@ -2492,6 +2492,7 @@
 
 
 <body>
+    <script src="app-shell.js"></script>
 
 
     <!-- =====================================================
@@ -3168,6 +3169,114 @@
 
 
     <!-- =====================================================
+         NOTES MODAL
+         ===================================================== -->
+
+    <div
+        class="modal-overlay"
+        id="notesModal">
+
+
+        <div
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+
+
+            <div class="modal-header">
+
+
+                <div>
+
+                    <h2 id="notesModalTitle">
+                        Subject Notes
+                    </h2>
+
+
+                    <p>
+                        Add and manage notes for this subject.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="modal-close"
+                    type="button"
+                    onclick="closeNotesModal()"
+                    aria-label="Close">
+
+                    ✕
+
+                </button>
+
+            </div>
+
+
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+
+
+                <!-- ADD NOTE FORM -->
+
+                <div style="border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+
+                    <h3 style="margin-bottom: 10px; font-size: 14px; font-weight: 600;">Add New Note</h3>
+
+                    <div class="form-group">
+                        <label for="noteTitle">Note Title</label>
+                        <input
+                            type="text"
+                            id="noteTitle"
+                            class="form-control"
+                            placeholder="Lesson 1: Introduction..."
+                            maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="noteContent">Description</label>
+                        <textarea
+                            id="noteContent"
+                            class="form-control"
+                            placeholder="Enter your notes here..."
+                            rows="4"
+                            maxlength="2000"></textarea>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="form-btn save-btn"
+                        onclick="addSubjectNote()"
+                        style="align-self: flex-start;">
+
+                        + Add Note
+
+                    </button>
+
+                </div>
+
+
+                <!-- NOTES LIST -->
+
+                <div>
+
+                    <h3 style="margin-bottom: 10px; font-size: 14px; font-weight: 600;">My Notes</h3>
+
+                    <div id="notesList" style="display: flex; flex-direction: column; gap: 10px;">
+                        <p style="color: var(--muted); text-align: center; padding: 20px;">Loading notes...</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
          TOAST
          ===================================================== -->
 
@@ -3253,23 +3362,43 @@
 
         function getUserEmail() {
 
-            const directEmail = sessionStorage.getItem("duemate-user-email");
+            const candidateKeys = [
+                "duemate-user-email",
+                "userEmail",
+                "duemate-user",
+                "dueMateUser",
+                "loggedInUser"
+            ];
 
-            if (directEmail) {
-                return directEmail.trim().toLowerCase();
-            }
+            for (const key of candidateKeys) {
+                const rawValue = sessionStorage.getItem(key);
 
-            for (const key of ["duemate-user", "dueMateUser"]) {
-                try {
-                    const user = JSON.parse(sessionStorage.getItem(key) || "null");
-                    const email = user && (user.email || user.user_email);
-
-                    if (email) {
-                        return String(email).trim().toLowerCase();
-                    }
-                }
-                catch {
+                if (!rawValue) {
                     continue;
+                }
+
+                if (key === "duemate-user" || key === "dueMateUser" || key === "loggedInUser") {
+                    try {
+                        const user = JSON.parse(rawValue);
+                        const email = user && (user.email || user.user_email || user.emailId || user.userEmail);
+
+                        if (email) {
+                            return String(email).trim().toLowerCase();
+                        }
+                    }
+                    catch {
+                        const text = String(rawValue).trim();
+                        if (text.includes("@")) {
+                            return text.toLowerCase();
+                        }
+                    }
+
+                    continue;
+                }
+
+                const directEmail = String(rawValue).trim();
+                if (directEmail && !directEmail.startsWith("{")) {
+                    return directEmail.toLowerCase();
                 }
             }
 
@@ -3344,26 +3473,25 @@
                         storageKey
                     );
 
+                const globalStored =
+                    localStorage.getItem("duemate-subjects");
 
-                if (!stored) {
+                const legacyStored =
+                    sessionStorage.getItem("duemate-subjects-" + getUserEmail());
 
-                    const legacyStored =
-                        sessionStorage.getItem("duemate-subjects-" + getUserEmail());
+                const savedPayload = stored || globalStored || legacyStored;
 
-                    if (legacyStored) {
-                        localStorage.setItem(storageKey, legacyStored);
-                    }
-
-                    subjects = legacyStored
-                        ? JSON.parse(legacyStored)
-                        : [];
-
+                if (!savedPayload) {
+                    subjects = [];
                     return;
                 }
 
+                if (stored !== savedPayload) {
+                    localStorage.setItem(storageKey, savedPayload);
+                }
 
                 const parsed =
-                    JSON.parse(stored);
+                    JSON.parse(savedPayload);
 
 
                 if (Array.isArray(parsed)) {
@@ -3400,9 +3528,16 @@
                 return;
             }
 
+            const payload = JSON.stringify(subjects);
+
             localStorage.setItem(
                 storageKey,
-                JSON.stringify(subjects)
+                payload
+            );
+
+            localStorage.setItem(
+                "duemate-subjects",
+                payload
             );
         }
 
@@ -3536,6 +3671,17 @@
 
                                     <div class="subject-actions">
 
+
+                                        <button
+                                            class="subject-action"
+                                            type="button"
+                                            title="View notes"
+                                            aria-label="View notes"
+                                            onclick="openNotesModal('${escapeHTML(subject.id)}', '${escapeHTML(subject.name)}')">
+
+                                            📝
+
+                                        </button>
 
                                         <button
                                             class="subject-action"
@@ -3813,6 +3959,136 @@
             resetSubjectForm();
         }
 
+
+        /* =====================================================
+           NOTES MODAL FUNCTIONS
+           ===================================================== */
+
+        let currentSubjectForNotes = null;
+
+        function openNotesModal(subjectId, subjectName) {
+            currentSubjectForNotes = subjectId;
+            
+            document.getElementById("notesModalTitle").textContent = `Notes for ${subjectName}`;
+            document.getElementById("noteTitle").value = "";
+            document.getElementById("noteContent").value = "";
+            
+            const modal = document.getElementById("notesModal");
+            if (modal) {
+                modal.classList.add("show");
+            }
+            
+            loadSubjectNotes(subjectId);
+        }
+
+        function closeNotesModal() {
+            const modal = document.getElementById("notesModal");
+            if (modal) {
+                modal.classList.remove("show");
+            }
+            currentSubjectForNotes = null;
+        }
+
+        async function loadSubjectNotes(subjectId) {
+            try {
+                const response = await window.authenticatedFetch(
+                    `${API_BASE}/api/subjects/${subjectId}/notes`
+                );
+                
+                const data = await response.json();
+                const notes = data.notes || [];
+                
+                const notesList = document.getElementById("notesList");
+                
+                if (notes.length === 0) {
+                    notesList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No notes yet. Add one to get started!</p>';
+                    return;
+                }
+                
+                notesList.innerHTML = notes.map(note => `
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border-left: 4px solid var(--purple);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600;">${escapeHtml(note.title)}</h4>
+                                <p style="margin: 0; font-size: 13px; color: var(--muted); white-space: pre-wrap; word-break: break-word;">${escapeHtml(note.content)}</p>
+                                <small style="color: var(--muted); display: block; margin-top: 5px;">Added: ${new Date(note.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <button 
+                                type="button"
+                                class="small-btn delete"
+                                onclick="deleteSubjectNote('${note.id}')"
+                                title="Delete note"
+                                style="padding: 4px 8px; font-size: 12px;">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.error("Load notes error:", error);
+                document.getElementById("notesList").innerHTML = '<p style="color: var(--danger);">Failed to load notes.</p>';
+            }
+        }
+
+        async function addSubjectNote() {
+            const title = document.getElementById("noteTitle").value.trim();
+            const content = document.getElementById("noteContent").value.trim();
+            
+            if (!title) {
+                showToast("Please enter a note title", "error");
+                return;
+            }
+            
+            if (!currentSubjectForNotes) {
+                showToast("Subject not selected", "error");
+                return;
+            }
+            
+            try {
+                const response = await window.authenticatedFetch(
+                    `${API_BASE}/api/subjects/${currentSubjectForNotes}/notes`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ title, content, note_type: "text" })
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error("Failed to add note");
+                }
+                
+                document.getElementById("noteTitle").value = "";
+                document.getElementById("noteContent").value = "";
+                
+                showToast("Note added successfully", "success");
+                loadSubjectNotes(currentSubjectForNotes);
+            } catch (error) {
+                console.error("Add note error:", error);
+                showToast("Failed to add note", "error");
+            }
+        }
+
+        async function deleteSubjectNote(noteId) {
+            if (!confirm("Delete this note?")) return;
+            
+            try {
+                const response = await window.authenticatedFetch(
+                    `${API_BASE}/api/subjects/notes/${noteId}`,
+                    { method: "DELETE" }
+                );
+                
+                if (!response.ok) {
+                    throw new Error("Failed to delete note");
+                }
+                
+                showToast("Note deleted", "success");
+                loadSubjectNotes(currentSubjectForNotes);
+            } catch (error) {
+                console.error("Delete note error:", error);
+                showToast("Failed to delete note", "error");
+            }
+        }
 
 
         /* =====================================================
@@ -4526,8 +4802,6 @@
         updateColorSelection();
 
     </script>
-
-    <script src="app-shell.js"></script>
 </body>
 
 </html>

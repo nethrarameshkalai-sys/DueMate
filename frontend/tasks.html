@@ -837,6 +837,7 @@
 </head>
 
 <body>
+    <script src="app-shell.js"></script>
 
     <div class="background" aria-hidden="true">
         <div class="grid"></div>
@@ -1840,6 +1841,17 @@
                                 <div class="task-meta">
 
                                     ${
+                                        task.group_name
+                                            ? `
+                                                <span style="color: var(--purple); font-weight: 500;">
+                                                    👥
+                                                    From: ${escapeHtml(task.group_name)}
+                                                </span>
+                                              `
+                                            : ""
+                                    }
+
+                                    ${
                                         task.subject
                                             ? `
                                                 <span>
@@ -2838,7 +2850,5 @@
         }
 
     </script>
-
-    <script src="app-shell.js"></script>
 </body>
 </html>

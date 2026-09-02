@@ -1186,6 +1186,23 @@
                 );
 
                 sessionStorage.setItem(
+                    "loggedInUser",
+                    JSON.stringify(
+                        loggedInUser
+                    )
+                );
+
+                sessionStorage.setItem(
+                    "duemate-user-email",
+                    userEmail
+                );
+
+                sessionStorage.setItem(
+                    "userEmail",
+                    userEmail
+                );
+
+                sessionStorage.setItem(
                     "duemate-user-name",
                     String(
                         loggedInUser.name ||

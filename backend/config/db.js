@@ -72,11 +72,14 @@ function initializeMySQLSchema(db) {
             priority varchar(20) DEFAULT 'medium',
             description text DEFAULT NULL,
             completed tinyint(1) DEFAULT 0,
+            group_id varchar(100) DEFAULT NULL,
             created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY idx_tasks_user_email (user_email),
-            KEY idx_tasks_task_date (task_date)
+            KEY idx_tasks_task_date (task_date),
+            KEY idx_tasks_group_id (group_id),
+            CONSTRAINT fk_tasks_group FOREIGN KEY (group_id) REFERENCES \`groups\` (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
@@ -322,6 +325,7 @@ function initializeSQLiteSchema(db) {
         priority TEXT DEFAULT 'medium',
         description TEXT,
         completed INTEGER DEFAULT 0,
+        group_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);

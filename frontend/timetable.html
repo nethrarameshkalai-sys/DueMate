@@ -1755,6 +1755,7 @@ body.dark .stars {
 
 
 <body>
+    <script src="app-shell.js"></script>
 
 
 <!-- =========================================================
@@ -2286,62 +2287,77 @@ let editingId = null;
 
 function getLoggedInUserEmail() {
 
-    const directEmail =
-        sessionStorage.getItem(
-            "userEmail"
-        );
-
-    if (directEmail) {
-
-        return directEmail
-            .trim()
-            .toLowerCase();
-
-    }
+    const candidateKeys = [
+        "duemate-user-email",
+        "userEmail",
+        "duemate-user",
+        "dueMateUser",
+        "loggedInUser"
+    ];
 
 
-    const loggedInUser =
-        sessionStorage.getItem(
-            "loggedInUser"
-        );
+    for (const key of candidateKeys) {
 
+        const rawValue =
+            sessionStorage.getItem(key);
 
-    if (loggedInUser) {
+        if (!rawValue) {
+            continue;
+        }
 
-        try {
+        if (
+            key === "duemate-user" ||
+            key === "dueMateUser" ||
+            key === "loggedInUser"
+        ) {
 
-            const parsed =
-                JSON.parse(
-                    loggedInUser
-                );
+            try {
 
+                const parsed =
+                    JSON.parse(rawValue);
 
-            if (
-                parsed &&
-                typeof parsed === "object" &&
-                parsed.email
-            ) {
+                const email =
+                    parsed &&
+                    (parsed.email ||
+                        parsed.user_email ||
+                        parsed.emailId ||
+                        parsed.userEmail);
 
-                return String(
-                    parsed.email
-                )
-                .trim()
-                .toLowerCase();
+                if (email) {
+
+                    return String(email)
+                        .trim()
+                        .toLowerCase();
+
+                }
 
             }
+            catch {
+
+                const text =
+                    String(rawValue).trim();
+
+                if (text.includes("@")) {
+
+                    return text.toLowerCase();
+
+                }
+
+            }
+
+            continue;
 
         }
-        catch {
 
-            if (
-                loggedInUser.includes("@")
-            ) {
+        const directEmail =
+            String(rawValue).trim();
 
-                return loggedInUser
-                    .trim()
-                    .toLowerCase();
+        if (
+            directEmail &&
+            !directEmail.startsWith("{")
+        ) {
 
-            }
+            return directEmail.toLowerCase();
 
         }
 
@@ -4833,7 +4849,5 @@ renderPeriods();
 
 
 </script>
-
-<script src="app-shell.js"></script>
 </body>
 </html>
