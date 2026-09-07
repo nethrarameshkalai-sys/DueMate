@@ -22,20 +22,35 @@ const PORT = process.env.PORT || 5000;
 // MIDDLEWARE
 // ============================================================
 
-// Configure CORS for production
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:5500").split(",");
+// Configure CORS for local development and production
+const allowedOrigins = [
+    ...(process.env.ALLOWED_ORIGINS || "")
+        .split(",")
+        .map(origin => origin.trim())
+        .filter(Boolean),
+
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:8080"
+];
 
 app.use(
     cors({
         origin: function (origin, callback) {
-            // Allow requests with no origin (mobile apps, Postman, etc.)
-            if (!origin) return callback(null, true);
-            
-            if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
-                callback(null, true);
-            } else {
-                callback(new Error("CORS not allowed"));
+            // Allow requests with no origin
+            if (!origin) {
+                return callback(null, true);
             }
+
+            if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            console.error("CORS blocked origin:", origin);
+            return callback(new Error("CORS not allowed"));
         },
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -206,6 +221,16 @@ app.get("/test-token", (req, res) => {
 // POST /api/auth/register
 // ============================================================
 
+const registrationCollegeDepartments = {
+    "Government College of Technology (GCT), Coimbatore": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Electronics and Instrumentation Engineering", "Production Engineering", "Computer Science and Engineering", "Information Technology", "Industrial Biotechnology", "Computer Science and Engineering (Artificial Intelligence and Machine Learning)", "Artificial Intelligence and Machine Learning"],
+    "Government College of Engineering, Salem": ["Civil Engineering", "Computer Science and Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Mechanical Engineering", "Metallurgical Engineering"],
+    "Government College of Engineering, Tirunelveli": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Computer Science and Engineering", "Electronics and Instrumentation Engineering", "Industrial Biotechnology"],
+    "Government College of Engineering, Erode": ["Civil Engineering", "Mechanical Engineering", "Automobile Engineering", "Computer Science and Engineering", "Computer Science and Engineering (Data Science)", "Electronics and Communication Engineering", "Electrical and Electronics Engineering", "Information Technology"],
+    "Government College of Engineering, Bargur": ["Electronics and Communication Engineering", "Electrical and Electronics Engineering", "Computer Science and Engineering", "Mechanical Engineering", "Cyber Security"],
+    "Government College of Engineering, Srirangam": ["Civil Engineering", "Mechanical Engineering", "Computer Science and Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Mechatronics Engineering"],
+    "Government College of Engineering, Thanjavur": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Computer Science and Engineering", "Robotics and Automation Engineering"]
+};
+
 app.post("/api/auth/register", async (req, res) => {
     const {
         name,
@@ -216,21 +241,26 @@ app.post("/api/auth/register", async (req, res) => {
         email,
         mobile,
         password,
-        theme
+        confirmPassword,
+        theme,
+        role = "student"
     } = req.body;
 
     // --------------------------------------------------------
     // REQUIRED FIELDS
     // --------------------------------------------------------
 
+    const requestedRole = String(role).trim().toLowerCase();
+    if (!['student', 'staff', 'teacher'].includes(requestedRole)) {
+        return res.status(400).json({ success: false, message: "Role must be student or staff." });
+    }
+    const cleanRole = requestedRole === "staff" ? "teacher" : requestedRole;
+
     if (
         !name ||
         !college ||
         !department ||
-        !course ||
-        !year ||
         !email ||
-        !mobile ||
         !password
     ) {
         return res.status(400).json({
@@ -246,10 +276,10 @@ app.post("/api/auth/register", async (req, res) => {
     const cleanName = String(name).trim();
     const cleanCollege = String(college).trim();
     const cleanDepartment = String(department).trim();
-    const cleanCourse = String(course).trim();
-    const cleanYear = String(year).trim();
+    const cleanCourse = String(course || "").trim() || null;
+    const cleanYear = String(year || "").trim() || null;
     const cleanEmail = String(email).trim().toLowerCase();
-    const cleanMobile = String(mobile).trim();
+    const cleanMobile = String(mobile || "").trim() || String(7000000000 + crypto.randomInt(2999999999));
 
     // --------------------------------------------------------
     // VALIDATION
@@ -276,14 +306,15 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    if (cleanCourse.length < 2) {
-        return res.status(400).json({
-            success: false,
-            message: "Please enter your course."
-        });
+    if (!Object.prototype.hasOwnProperty.call(registrationCollegeDepartments, cleanCollege)) {
+        return res.status(400).json({ success: false, message: "Invalid college." });
     }
 
-    if (!["1", "2", "3", "4"].includes(cleanYear)) {
+    if (!registrationCollegeDepartments[cleanCollege].includes(cleanDepartment)) {
+        return res.status(400).json({ success: false, message: "Invalid college and department combination." });
+    }
+
+    if (cleanRole === "student" && !["1", "2", "3", "4", "5"].includes(cleanYear)) {
         return res.status(400).json({
             success: false,
             message: "Please select a valid year."
@@ -299,7 +330,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    if (!/^\d{10}$/.test(cleanMobile)) {
+    if (cleanMobile && !/^\d{10}$/.test(cleanMobile)) {
         return res.status(400).json({
             success: false,
             message: "Please enter a valid 10-digit mobile number."
@@ -311,6 +342,10 @@ app.post("/api/auth/register", async (req, res) => {
             success: false,
             message: "Password must contain at least 8 characters."
         });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ success: false, message: "Password and confirm password must match." });
     }
 
     // --------------------------------------------------------
@@ -351,7 +386,7 @@ app.post("/api/auth/register", async (req, res) => {
             if (emailResults.length > 0) {
                 return res.status(409).json({
                     success: false,
-                    message: "An account with this email already exists."
+                        message: "An account with this email already exists."
                 });
             }
 
@@ -414,9 +449,10 @@ app.post("/api/auth/register", async (req, res) => {
                                 email,
                                 mobile,
                                 password,
-                                theme
+                                theme,
+                                role
                             )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         `;
 
                         db.query(
@@ -430,7 +466,8 @@ app.post("/api/auth/register", async (req, res) => {
                                 cleanEmail,
                                 cleanMobile,
                                 hashedPassword,
-                                selectedTheme
+                                selectedTheme,
+                                cleanRole
                             ],
                             (insertError, result) => {
                                 if (insertError) {
@@ -458,8 +495,9 @@ app.post("/api/auth/register", async (req, res) => {
                                         course: cleanCourse,
                                         year: cleanYear,
                                         email: cleanEmail,
-                                        mobile: cleanMobile,
-                                        theme: selectedTheme
+                                        theme: selectedTheme,
+                                        role: cleanRole,
+                                        login_id: null
                                     }
                                 });
                             }
@@ -489,19 +527,17 @@ app.post("/api/auth/register", async (req, res) => {
 // ============================================================
 
 app.post("/api/auth/login", (req, res) => {
-    const {
-        email,
-        password
-    } = req.body;
+    const { email, password, role } = req.body;
+    const identifier = String(email || "").trim().toLowerCase();
+    const requestedRole = String(role || "").trim().toLowerCase();
+    const accountRole = requestedRole === "staff" ? "teacher" : requestedRole;
 
-    if (!email || !password) {
+    if (!identifier || !password || !["student", "staff", "teacher"].includes(requestedRole)) {
         return res.status(400).json({
             success: false,
-            message: "Email and password are required."
+            message: "Email, role and password are required."
         });
     }
-
-    const cleanEmail = String(email).trim().toLowerCase();
 
     const sql = `
         SELECT
@@ -512,17 +548,17 @@ app.post("/api/auth/login", (req, res) => {
             course,
             year,
             email,
-            mobile,
+            role,
             password,
             theme
         FROM users
-        WHERE email = ?
+        WHERE email = ? AND role = ?
         LIMIT 1
     `;
 
     db.query(
         sql,
-        [cleanEmail],
+        [identifier, accountRole],
         async (error, results) => {
             if (error) {
                 console.error(
@@ -616,7 +652,6 @@ app.get("/api/user/profile", verifyToken, (req, res) => {
             course,
             year,
             email,
-            mobile,
             theme,
             student_id,
             semester
@@ -1698,27 +1733,23 @@ app.get("/api/groups/:groupId/tasks", verifyToken, (req, res) => {
 app.get("/api/tasks", verifyToken, (req, res) => {
     const userEmail = req.user.email;
 
-    const sql = `
-        SELECT
-            t.id,
-            t.user_email,
-            t.name,
-            t.subject,
-            t.task_date,
-            t.priority,
-            t.description,
-            t.completed,
-            t.group_id,
-            g.name AS group_name,
-            t.created_at,
-            t.updated_at
-        FROM tasks t
-        LEFT JOIN \`groups\` g ON t.group_id = g.id
-        WHERE t.user_email = ?
-        ORDER BY
-            t.task_date ASC,
-            t.id DESC
-    `;
+   const sql = `
+    SELECT
+        id,
+        user_email,
+        name,
+        subject,
+        task_date,
+        priority,
+        description,
+        completed,
+        created_at
+    FROM tasks
+    WHERE user_email = ?
+    ORDER BY
+        task_date ASC,
+        id DESC
+`;
 
     db.query(
         sql,
@@ -1741,7 +1772,12 @@ app.get("/api/tasks", verifyToken, (req, res) => {
                 success: true,
                 message:
                     "Tasks loaded successfully.",
-                tasks: results
+                tasks: (results || []).map(task => ({
+    ...task,
+    group_id: task.group_id ?? null,
+    group_name: task.group_name ?? null,
+    updated_at: task.updated_at ?? task.created_at ?? null
+}))
             });
         }
     );
@@ -2922,6 +2958,318 @@ const upload = multer({
             cb(new Error("File type not allowed"));
         }
     }
+});
+
+const assignmentUpload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        cb(null, file.mimetype === "application/pdf");
+    }
+});
+
+function requireRole(requiredRole) {
+    return (req, res, next) => {
+        db.query("SELECT role FROM users WHERE email = ? LIMIT 1", [req.user.email], (error, results) => {
+            if (error || results.length === 0 || results[0].role !== requiredRole) {
+                return res.status(403).json({ success: false, message: `Only ${requiredRole}s can perform this action.` });
+            }
+            next();
+        });
+    };
+}
+
+function removeUploadedFile(file) {
+    if (file && file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+}
+
+// Assignment workflow: teachers publish PDFs, students submit PDFs, teachers review them.
+app.post("/api/assignments", verifyToken, requireRole("teacher"), assignmentUpload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).json({ success: false, message: "A PDF assignment file is required." });
+    const title = String(req.body.title || "").trim();
+    const subject = String(req.body.subject || "").trim();
+    const description = String(req.body.description || "").trim();
+    const targetYear = String(req.body.targetYear || "").trim();
+    const dueDate = String(req.body.dueDate || "").trim();
+    const dueTime = String(req.body.dueTime || "").trim();
+    if (!title || !subject || !description || !targetYear || !dueDate || !dueTime) {
+        removeUploadedFile(req.file);
+        return res.status(400).json({ success: false, message: "Subject, title, instructions, target year, due date, and due time are required." });
+    }
+
+    db.query("SELECT college, department FROM users WHERE email = ? AND role = 'teacher' LIMIT 1", [req.user.email], (profileError, profiles) => {
+        if (profileError || profiles.length === 0) {
+            removeUploadedFile(req.file);
+            return res.status(403).json({ success: false, message: "Staff profile not found." });
+        }
+        const assignment = {
+        id: crypto.randomBytes(12).toString("hex"),
+        teacherEmail: req.user.email,
+        title,
+        subject,
+        description,
+        dueDate,
+        fileName: req.file.originalname,
+        filePath: path.basename(req.file.path),
+        fileSize: req.file.size,
+        college: profiles[0].college,
+        department: profiles[0].department
+        };
+        db.query(`INSERT INTO assignments
+        (id, teacher_email, title, subject, description, due_date, due_time, target_year, college, department, file_name, file_path, file_size, file_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [assignment.id, assignment.teacherEmail, assignment.title, assignment.subject, assignment.description,
+            assignment.dueDate, dueTime, targetYear,
+            assignment.college, assignment.department, assignment.fileName, assignment.filePath, assignment.fileSize, "application/pdf"],
+        (error) => {
+            if (error) {
+                removeUploadedFile(req.file);
+                return res.status(500).json({ success: false, message: "Unable to publish assignment." });
+            }
+            db.query(`SELECT email FROM users WHERE role = 'student' AND college = ? AND department = ?
+                AND year = ?`, [assignment.college, assignment.department, targetYear], (studentError, students) => {
+                if (!studentError) students.forEach((student) => createNotification(student.email, "assignment", "New assignment", `${assignment.title} is available.`, assignment.id, "assignment"));
+            });
+            res.status(201).json({ success: true, assignment });
+        });
+    });
+});
+
+app.get("/api/assignments", verifyToken, (req, res) => {
+    db.query("SELECT role FROM users WHERE email = ? LIMIT 1", [req.user.email], (roleError, roleResults) => {
+        if (roleError || roleResults.length === 0) return res.status(403).json({ success: false, message: "User account not found." });
+        const isTeacher = roleResults[0].role === "teacher";
+        const sql = isTeacher
+            ? `SELECT a.*, COUNT(s.id) AS submission_count,
+                CASE WHEN COUNT(s.id) = 0 AND a.due_date < CURRENT_DATE THEN 'overdue'
+                WHEN COUNT(s.id) = 0 THEN 'pending'
+                WHEN SUM(s.status IN ('verified', 'completed')) = COUNT(s.id) THEN 'completed'
+                ELSE 'submitted' END AS assignment_status
+                FROM assignments a LEFT JOIN assignment_submissions s ON s.assignment_id = a.id
+                JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+                WHERE a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department
+                GROUP BY a.id ORDER BY a.created_at DESC`
+            : `SELECT a.*, s.id AS submission_id, s.file_name AS submission_file_name,
+                s.status AS submission_status, s.feedback AS submission_feedback, s.submitted_at, s.viewed_at,
+                CASE WHEN s.status = 'needs_correction' THEN 'needs_correction'
+                WHEN s.status IN ('verified', 'completed') THEN s.status
+                WHEN s.viewed_at IS NOT NULL THEN 'viewed'
+                WHEN s.id IS NOT NULL THEN 'submitted'
+                WHEN a.due_date < CURRENT_DATE THEN 'overdue'
+                ELSE 'pending' END AS assignment_status
+                FROM assignments a JOIN users u ON u.email = ?
+                LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_email = u.email
+                WHERE (a.college IS NULL OR a.college = u.college)
+                AND (a.department IS NULL OR a.department = u.department)
+                AND a.target_year = u.year
+                ORDER BY a.created_at DESC`;
+            const parameters = isTeacher ? [req.user.email, req.user.email] : [req.user.email];
+            db.query(sql, parameters, (error, assignments) => {
+            if (error) return res.status(500).json({ success: false, message: "Unable to load assignments." });
+            res.json({ success: true, role: isTeacher ? "teacher" : "student", assignments });
+        });
+    });
+});
+
+function staffOnly(req, res, next) {
+    requireRole("teacher")(req, res, next);
+}
+
+app.get("/api/staff/context", verifyToken, staffOnly, (req, res) => {
+    db.query(`SELECT id, name, email, college, department, role FROM users WHERE email = ? AND role = 'teacher' LIMIT 1`, [req.user.email], (error, results) => {
+        if (error || results.length === 0) return res.status(404).json({ success: false, message: "Staff profile not found." });
+        res.json({ success: true, staff: results[0] });
+    });
+});
+
+app.get("/api/staff/students", verifyToken, staffOnly, (req, res) => {
+    db.query(`SELECT staff.college, staff.department FROM users staff WHERE staff.email = ? AND staff.role = 'teacher' LIMIT 1`, [req.user.email], (profileError, profiles) => {
+        if (profileError || profiles.length === 0) return res.status(404).json({ success: false, message: "Staff profile not found." });
+        db.query(`SELECT id, name, email, college, department, year FROM users
+            WHERE role = 'student' AND college = ? AND department = ? ORDER BY CAST(year AS UNSIGNED), name`,
+            [profiles[0].college, profiles[0].department], (error, students) => {
+            if (error) return res.status(500).json({ success: false, message: "Unable to load students." });
+            res.json({ success: true, students });
+        });
+    });
+});
+
+app.get("/api/staff/dashboard", verifyToken, staffOnly, (req, res) => {
+    const assignmentCount = `SELECT COUNT(*) AS count FROM assignments WHERE teacher_email = ?`;
+    const submissionCounts = `SELECT
+        SUM(s.status = 'submitted') AS submitted,
+        SUM(s.status = 'submitted' OR s.status = 'needs_revision') AS pending,
+        SUM(s.status = 'completed' OR s.status = 'verified') AS completed
+        FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id WHERE a.teacher_email = ?`;
+    const activity = `SELECT s.id, s.student_email, s.status, s.submitted_at, a.title
+        FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        WHERE a.teacher_email = ? ORDER BY s.submitted_at DESC LIMIT 10`;
+    db.query(assignmentCount, [req.user.email], (firstError, assignments) => {
+        if (firstError) return res.status(500).json({ success: false, message: "Unable to load Staff dashboard." });
+        db.query(submissionCounts, [req.user.email], (secondError, counts) => {
+            if (secondError) return res.status(500).json({ success: false, message: "Unable to load Staff dashboard." });
+            db.query(activity, [req.user.email], (thirdError, recent) => {
+                if (thirdError) return res.status(500).json({ success: false, message: "Unable to load Staff activity." });
+                const row = counts[0] || {};
+                res.json({ success: true, stats: {
+                    totalAssignments: Number(assignments[0].count || 0),
+                    pendingSubmissions: Number(row.pending || 0),
+                    submitted: Number(row.submitted || 0),
+                    awaitingVerification: Number(row.pending || 0),
+                    completed: Number(row.completed || 0)
+                }, recent });
+            });
+        });
+    });
+});
+
+app.get("/api/staff/verifications", verifyToken, staffOnly, (req, res) => {
+    db.query(`SELECT s.id, s.assignment_id, s.student_email, u.name AS student_name, u.year,
+        a.title, s.status, s.submitted_at, s.reviewed_at, s.viewed_at, s.file_name, s.feedback
+        FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        JOIN users u ON u.email = s.student_email
+        WHERE a.teacher_email = ? ORDER BY s.submitted_at DESC`, [req.user.email], (error, submissions) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to load verifications." });
+        res.json({ success: true, submissions });
+    });
+});
+
+app.patch("/api/staff/verifications/:id", verifyToken, staffOnly, (req, res) => {
+    const status = String(req.body.status || "").trim().toLowerCase();
+    if (!["verified", "completed", "needs_correction"].includes(status)) return res.status(400).json({ success: false, message: "Invalid verification status." });
+    db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
+        WHERE s.id = ? AND a.teacher_email = ?`, [status, String(req.body.feedback || "").trim() || null, req.params.id, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to update verification." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Submission not found." });
+        db.query(`SELECT s.student_email, a.title FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id WHERE s.id = ? LIMIT 1`, [req.params.id], (lookupError, rows) => {
+            if (!lookupError && rows.length) {
+                const message = status === "needs_correction" ? `Correction requested for ${rows[0].title}.` : `Your submission for ${rows[0].title} was ${status}.`;
+                createNotification(rows[0].student_email, status === "needs_correction" ? "correction_required" : "verification", "Assignment update", message, req.params.id, "submission");
+            }
+            res.json({ success: true, message: "Verification updated." });
+        });
+    });
+});
+
+app.patch("/api/staff/verifications/:id/viewed", verifyToken, staffOnly, (req, res) => {
+    db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        SET s.viewed_at = CURRENT_TIMESTAMP WHERE s.id = ? AND a.teacher_email = ?`, [req.params.id, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to mark submission viewed." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Submission not found." });
+        db.query(`SELECT s.student_email, a.title FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id WHERE s.id = ? LIMIT 1`, [req.params.id], (lookupError, rows) => {
+            if (!lookupError && rows.length) createNotification(rows[0].student_email, "submission_viewed", "Submission viewed", `Your submission for ${rows[0].title} was viewed by Staff.`, req.params.id, "submission");
+            res.json({ success: true });
+        });
+    });
+});
+
+app.patch("/api/assignments/:id", verifyToken, requireRole("teacher"), (req, res) => {
+    const fields = {
+        title: String(req.body.title || "").trim(),
+        subject: String(req.body.subject || "").trim() || null,
+        description: String(req.body.description || "").trim(),
+        dueDate: String(req.body.dueDate || "").trim() || null,
+        dueTime: String(req.body.dueTime || "").trim() || null,
+        targetYear: String(req.body.targetYear || "").trim() || null
+    };
+    if (!fields.title || !fields.subject || !fields.description || !fields.targetYear || !fields.dueDate || !fields.dueTime) return res.status(400).json({ success: false, message: "Subject, title, instructions, target year, due date, and due time are required." });
+    db.query(`UPDATE assignments a JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+        SET a.title = ?, a.subject = ?, a.description = ?, a.due_date = ?, a.due_time = ?, a.target_year = ?
+        WHERE a.id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`, [req.user.email, fields.title, fields.subject, fields.description, fields.dueDate, fields.dueTime, fields.targetYear, req.params.id, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to update assignment." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Assignment not found." });
+        res.json({ success: true, message: "Assignment updated." });
+    });
+});
+
+app.delete("/api/assignments/:id", verifyToken, requireRole("teacher"), (req, res) => {
+    db.query(`DELETE a FROM assignments a JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+        WHERE a.id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`, [req.user.email, req.params.id, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to delete assignment." });
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Assignment not found." });
+        res.json({ success: true, message: "Assignment deleted." });
+    });
+});
+
+app.get("/api/assignments/:id/file", verifyToken, (req, res) => {
+    db.query(`SELECT a.file_path FROM assignments a WHERE a.id = ?
+        AND (EXISTS (SELECT 1 FROM users staff WHERE staff.email = ? AND staff.role = 'teacher'
+            AND a.teacher_email = staff.email AND a.college = staff.college AND a.department = staff.department)
+        OR EXISTS (SELECT 1 FROM users u WHERE u.email = ? AND u.role = 'student'
+            AND a.college = u.college AND a.department = u.department AND a.target_year = u.year)) LIMIT 1`,
+        [req.params.id, req.user.email, req.user.email], (error, results) => {
+            if (error || results.length === 0) return res.status(404).json({ success: false, message: "Assignment file not found." });
+            res.sendFile(path.resolve(uploadDir, results[0].file_path));
+        });
+});
+
+app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student"), assignmentUpload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).json({ success: false, message: "A PDF submission file is required." });
+    const submissionId = crypto.randomBytes(12).toString("hex");
+    db.query(`SELECT a.id, a.teacher_email, a.title FROM assignments a
+        JOIN users student ON student.email = ? AND student.role = 'student'
+        WHERE a.id = ? AND a.college = student.college AND a.department = student.department AND a.target_year = student.year LIMIT 1`, [req.user.email, req.params.id], (checkError, assignments) => {
+        if (checkError || assignments.length === 0) {
+            removeUploadedFile(req.file);
+            return res.status(404).json({ success: false, message: "Assignment not found." });
+        }
+        db.query(`INSERT INTO assignment_submissions
+            (id, assignment_id, student_email, file_name, file_path, file_size, file_type, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'submitted')
+            ON DUPLICATE KEY UPDATE file_name = VALUES(file_name), file_path = VALUES(file_path), file_size = VALUES(file_size), status = 'submitted', feedback = NULL, reviewed_at = NULL, submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, req.params.id, req.user.email, req.file.originalname, path.basename(req.file.path), req.file.size, "application/pdf"],
+            (error) => {
+                if (error) {
+                    removeUploadedFile(req.file);
+                    return res.status(500).json({ success: false, message: "Unable to submit assignment." });
+                }
+                createNotification(
+                    assignments[0].teacher_email,
+                    "assignment_submission",
+                    "Assignment submitted",
+                    `${req.user.email} submitted ${assignments[0].title} for verification.`,
+                    req.params.id,
+                    "assignment"
+                );
+                res.status(201).json({ success: true, message: "Assignment submitted for review." });
+            });
+    });
+});
+
+app.get("/api/assignments/:id/submissions", verifyToken, requireRole("teacher"), (req, res) => {
+    db.query(`SELECT s.*, a.title FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+        WHERE s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department ORDER BY s.submitted_at DESC`, [req.user.email, req.params.id, req.user.email], (error, submissions) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to load submissions." });
+        res.json({ success: true, submissions });
+    });
+});
+
+app.get("/api/assignments/submissions/:id/file", verifyToken, (req, res) => {
+    db.query(`SELECT s.file_path FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        WHERE s.id = ? AND (EXISTS (SELECT 1 FROM users staff WHERE staff.email = ? AND staff.role = 'teacher'
+            AND a.teacher_email = staff.email AND a.college = staff.college AND a.department = staff.department)
+            OR s.student_email = ?) LIMIT 1`, [req.params.id, req.user.email, req.user.email], (error, results) => {
+        if (error || results.length === 0) return res.status(404).json({ success: false, message: "Submission file not found." });
+        res.sendFile(path.resolve(uploadDir, results[0].file_path));
+    });
+});
+
+app.patch("/api/assignments/:assignmentId/submissions/:submissionId", verifyToken, requireRole("teacher"), (req, res) => {
+    const status = String(req.body.status || "").trim().toLowerCase();
+    if (!["submitted", "reviewed", "completed", "needs_revision"].includes(status)) {
+        return res.status(400).json({ success: false, message: "Invalid submission status." });
+    }
+    db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+        SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
+        WHERE s.id = ? AND s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`,
+        [req.user.email, status, String(req.body.feedback || "").trim() || null, req.params.submissionId, req.params.assignmentId, req.user.email], (error, result) => {
+        if (error) return res.status(500).json({ success: false, message: "Unable to update review status." });
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Submission not found." });
+        res.json({ success: true, message: "Submission review updated." });
+    });
 });
 
 // POST /api/subjects/:subjectId/notes/:noteId/upload - Upload file to subject note

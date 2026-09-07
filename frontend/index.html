@@ -638,7 +638,7 @@
                 <div class="form-group">
 
                     <label for="email">
-                        Email ID
+                        Email
                     </label>
 
                     <div class="input-wrap">
@@ -650,13 +650,24 @@
                         <input
                             type="email"
                             id="email"
-                            placeholder="Enter your email ID"
+                            placeholder="Enter your email"
                             autocomplete="email"
                             required
                         >
 
                     </div>
 
+                </div>
+
+                <div class="form-group">
+                    <label for="loginRole">Login as</label>
+                    <div class="input-wrap">
+                        <span class="icon">🎓</span>
+                        <select id="loginRole" style="width:100%; min-height:46px; padding:11px 13px 11px 41px; border:1px solid rgba(120,125,160,0.18); border-radius:12px; background:var(--input); color:var(--text);" required>
+                            <option value="student">Student</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
                 </div>
 
 
@@ -757,9 +768,7 @@
 
             <div class="security">
 
-                🔒 Registration uses email and mobile
-                verification. Normal login uses your
-                registered Email ID and Password.
+                    🔒 Sign in with your registered email, role, and password.
 
             </div>
 
@@ -793,6 +802,9 @@
 
     const passwordInput =
         document.getElementById("password");
+
+    const loginRole =
+        document.getElementById("loginRole");
 
     const passwordToggle =
         document.getElementById("passwordToggle");
@@ -995,20 +1007,10 @@
 
             }
 
-
-            if (
-                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                    .test(email)
-            ) {
-
-                showMessage(
-                    "Please enter a valid email ID."
-                );
-
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage("Please enter a valid email address.");
                 emailInput.focus();
-
                 return;
-
             }
 
 
@@ -1053,6 +1055,7 @@
 
                             body:
                                 JSON.stringify({
+                                    role: loginRole.value,
                                     email: email,
                                     password: password
                                 })
@@ -1406,6 +1409,6 @@
 
 </script>
 
-    <script src="app-shell.js"></script>
+    <script src="app-shell.js?v=20260907"></script>
 </body>
 </html>

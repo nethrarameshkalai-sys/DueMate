@@ -134,37 +134,13 @@ body {
 .app-shell-drawer.show { transform: translateX(0); }
 .app-shell-drawer h2 { margin: 0 0 28px; font-size: 24px; }
 .app-shell-drawer h2 span { color: var(--app-accent); }
-.app-shell-section-title {
-    margin: 0 10px 9px;
-    color: var(--app-muted);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
+.app-shell-section-title { margin: 0 10px 9px; color: var(--app-muted); font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
 .app-shell-drawer nav { display: grid; gap: 5px; }
 .app-shell-drawer a,
-.app-shell-drawer button {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 13px;
-    border: 0;
-    border-radius: 13px;
-    background: transparent;
-    color: var(--app-text);
-    text-decoration: none;
-    text-align: left;
-    font: inherit;
-    cursor: pointer;
-}
+.app-shell-drawer button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 13px; border: 0; border-radius: 13px; background: transparent; color: var(--app-text); text-decoration: none; text-align: left; font: inherit; cursor: pointer; }
 .app-shell-drawer a:hover,
 .app-shell-drawer button:hover,
-.app-shell-drawer a.active {
-    background: rgba(117,108,255,0.1);
-    color: var(--app-accent);
-}
+.app-shell-drawer a.active { background: rgba(117,108,255,0.1); color: var(--app-accent); }
 
 @media (prefers-reduced-motion: reduce) {
     .background .study-float { animation: none; }

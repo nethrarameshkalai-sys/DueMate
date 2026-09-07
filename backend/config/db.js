@@ -12,7 +12,7 @@ const dbConfig = {
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "duemate",
-    port: Number(process.env.DB_PORT) || 3307,
+    port: Number(process.env.DB_PORT) || 3306,
     ...(process.env.DB_SSL === "true"
         ? {
             ssl: {
@@ -61,6 +61,66 @@ function initializeMySQLSchema(db) {
             KEY idx_users_email (email)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Keep existing accounts usable while adding role-specific login IDs.
+    db.query(`ALTER TABLE \`users\` ADD COLUMN role varchar(20) NOT NULL DEFAULT 'student'`, (error) => {
+        if (error && error.code !== "ER_DUP_FIELDNAME") console.error("Unable to add users.role:", error.message);
+    });
+    db.query(`ALTER TABLE \`users\` ADD COLUMN login_id varchar(100) DEFAULT NULL`, (error) => {
+        if (error && error.code !== "ER_DUP_FIELDNAME") console.error("Unable to add users.login_id:", error.message);
+    });
+    db.query(`ALTER TABLE \`users\` ADD UNIQUE KEY uq_users_login_id (login_id)`, (error) => {
+        if (error && error.code !== "ER_DUP_KEYNAME") console.error("Unable to add users.login_id index:", error.message);
+    });
+
+    db.query(`
+        CREATE TABLE IF NOT EXISTS \`assignments\` (
+            id varchar(100) NOT NULL,
+            teacher_email varchar(255) NOT NULL,
+            title varchar(255) NOT NULL,
+            subject varchar(255) DEFAULT NULL,
+            description text DEFAULT NULL,
+            due_date date DEFAULT NULL,
+            file_name varchar(255) NOT NULL,
+            file_path varchar(500) NOT NULL,
+            file_size int DEFAULT 0,
+            file_type varchar(100) DEFAULT 'application/pdf',
+            created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_assignments_teacher (teacher_email)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    db.query(`
+        CREATE TABLE IF NOT EXISTS \`assignment_submissions\` (
+            id varchar(100) NOT NULL,
+            assignment_id varchar(100) NOT NULL,
+            student_email varchar(255) NOT NULL,
+            file_name varchar(255) NOT NULL,
+            file_path varchar(500) NOT NULL,
+            file_size int DEFAULT 0,
+            file_type varchar(100) DEFAULT 'application/pdf',
+            status varchar(30) NOT NULL DEFAULT 'submitted',
+            feedback text DEFAULT NULL,
+            submitted_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY assignment_student (assignment_id, student_email),
+            KEY idx_submissions_assignment (assignment_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    [
+        "ALTER TABLE `assignments` ADD COLUMN target_year varchar(10) DEFAULT NULL",
+        "ALTER TABLE `assignments` ADD COLUMN due_time time DEFAULT NULL",
+        "ALTER TABLE `assignments` ADD COLUMN college varchar(255) DEFAULT NULL",
+        "ALTER TABLE `assignments` ADD COLUMN department varchar(255) DEFAULT NULL",
+        "ALTER TABLE `assignment_submissions` ADD COLUMN viewed_at timestamp NULL DEFAULT NULL"
+    ].forEach((sql) => {
+        db.query(sql, (error) => {
+            if (error && error.code !== "ER_DUP_FIELDNAME") console.error("Assignment schema update failed:", error.message);
+        });
+    });
 
     db.query(`
         CREATE TABLE IF NOT EXISTS \`tasks\` (

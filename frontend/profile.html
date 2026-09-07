@@ -2437,7 +2437,7 @@
 
 
 <body>
-    <script src="app-shell.js"></script>
+    <script src="app-shell.js?v=20260907"></script>
 
 
     <!-- =========================================================
@@ -4090,6 +4090,31 @@
         displayProfile();
 
     </script>
+<script>
+    try {
+        const profileUser = JSON.parse(sessionStorage.getItem("duemate-user") || "null");
+        const mobileDisplay = document.getElementById("mobileNumber");
+        const mobileEdit = document.getElementById("editMobile");
+        [mobileDisplay, mobileEdit].forEach(function (field) {
+            if (field) {
+                const container = field.closest(".form-group, .profile-info-item, .info-item");
+                if (container) container.style.display = "none";
+            }
+        });
+        if (profileUser && profileUser.role === "teacher") {
+            const yearField = document.getElementById("semester");
+            if (yearField) {
+                const container = yearField.closest(".form-group, .profile-info-item, .info-item");
+                if (container) container.style.display = "none";
+            }
+            const editYear = document.getElementById("editSemester");
+            if (editYear) {
+                const container = editYear.closest(".form-group");
+                if (container) container.style.display = "none";
+            }
+        }
+    } catch (_) { /* Leave the existing profile behavior unchanged. */ }
+</script>
 </body>
 
 </html>

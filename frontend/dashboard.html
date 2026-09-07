@@ -2268,45 +2268,12 @@
 
 
             <a
-                href="tasks.html"
-                class="nav-link">
-
-                <span class="nav-icon">📝</span>
-
-                Tasks
-
-            </a>
-
-
-            <a
                 href="calendar.html"
                 class="nav-link">
 
                 <span class="nav-icon">📅</span>
 
                 Calendar
-
-            </a>
-
-
-            <a
-                href="timetable.html"
-                class="nav-link">
-
-                <span class="nav-icon">🗓️</span>
-
-                Timetable
-
-            </a>
-
-
-            <a
-                href="groups.html"
-                class="nav-link">
-
-                <span class="nav-icon">👥</span>
-
-                Groups
 
             </a>
 
@@ -2339,17 +2306,6 @@
                 <span class="nav-icon">👤</span>
 
                 Profile
-
-            </a>
-
-
-            <a
-                href="settings.html"
-                class="nav-link">
-
-                <span class="nav-icon">⚙️</span>
-
-                Settings
 
             </a>
 
@@ -2458,7 +2414,7 @@
 
         <!-- TIMETABLE -->
 
-        <section>
+        <section id="dashboardTimetable" hidden>
 
             <div class="section-header">
                 <h2>Timetable</h2>
@@ -2756,54 +2712,6 @@
                 <button
                     class="quick-btn"
                     type="button"
-                    onclick="goTo('tasks.html')">
-
-                    <span class="quick-btn-icon">
-                        📝
-                    </span>
-
-                    <span class="quick-btn-text">
-
-                        <span class="quick-btn-title">
-                            Tasks
-                        </span>
-
-                        <span class="quick-btn-subtitle">
-                            Manage your work
-                        </span>
-
-                    </span>
-
-                </button>
-
-
-                <button
-                    class="quick-btn"
-                    type="button"
-                    onclick="goTo('timetable.html')">
-
-                    <span class="quick-btn-icon">
-                        🗓️
-                    </span>
-
-                    <span class="quick-btn-text">
-
-                        <span class="quick-btn-title">
-                            Timetable
-                        </span>
-
-                        <span class="quick-btn-subtitle">
-                            View your schedule
-                        </span>
-
-                    </span>
-
-                </button>
-
-
-                <button
-                    class="quick-btn"
-                    type="button"
                     onclick="goTo('calendar.html')">
 
                     <span class="quick-btn-icon">
@@ -2824,29 +2732,6 @@
 
                 </button>
 
-
-                <button
-                    class="quick-btn"
-                    type="button"
-                    onclick="goTo('groups.html')">
-
-                    <span class="quick-btn-icon">
-                        👥
-                    </span>
-
-                    <span class="quick-btn-text">
-
-                        <span class="quick-btn-title">
-                            Groups
-                        </span>
-
-                        <span class="quick-btn-subtitle">
-                            Study together
-                        </span>
-
-                    </span>
-
-                </button>
 
             </div>
 
@@ -3098,6 +2983,13 @@
 
 
     <script>
+        try {
+            const dashboardUser = JSON.parse(sessionStorage.getItem("duemate-user") || "null");
+            if (dashboardUser && dashboardUser.role === "teacher") {
+                window.location.replace("staff-dashboard.html");
+            }
+        } catch (_) { /* Continue with the regular dashboard for malformed sessions. */ }
+
 
         /* =====================================================
            THEME

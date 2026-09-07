@@ -1,17 +1,25 @@
 (function () {
-    const mainPages = [
-        ["dashboard.html", "Dashboard", "🏠"],
-        ["tasks.html", "Tasks", "📝"],
-        ["calendar.html", "Calendar", "📅"],
-        ["timetable.html", "Timetable", "🗓️"],
-        ["subjects.html", "Subjects", "📚"],
-        ["groups.html", "Groups", "👥"],
+    let sessionUser = null;
+    try { sessionUser = JSON.parse(sessionStorage.getItem("duemate-user") || "null"); } catch (_) { sessionUser = null; }
+    const isStaff = sessionUser && sessionUser.role === "teacher";
+    const pageName = location.pathname.split("/").pop() || "dashboard.html";
+    const useMasterShell = false;
+    const removedPages = ["tasks.html", "timetable.html", "groups.html", "settings.html"];
+    if (removedPages.includes(pageName)) {
+        location.replace("dashboard.html");
+        return;
+    }
+    const mainPages = isStaff ? [
+        ["staff-dashboard.html", "Dashboard", "🏠"],
+        ["assignments.html", "Assignments", "📄"],
+        ["staff-students.html", "Students", "🎓"],
+        ["staff-verification.html", "Verification", "✅"],
         ["notifications.html", "Notifications", "🔔"]
+    ] : [
+        ["dashboard.html", "Dashboard", "🏠"], ["calendar.html", "Calendar", "📅"],
+        ["assignments.html", "Assignments", "📄"], ["notifications.html", "Notifications", "🔔"]
     ];
-    const accountPages = [
-        ["profile.html", "Profile", "👤"],
-        ["settings.html", "Settings", "⚙️"]
-    ];
+    const accountPages = [["profile.html", "Profile", "👤"]];
 
     function email() {
         const direct = sessionStorage.getItem("duemate-user-email") || sessionStorage.getItem("userEmail");
@@ -37,6 +45,70 @@
         document.body.classList.toggle("dark", selected === "dark" || (selected === "system" && systemDark));
     }
 
+    function toggleTheme() {
+        const user = email();
+        const key = user ? "duemate-theme-" + encodeURIComponent(user) : "duemate-theme";
+        const next = theme() === "dark" ? "light" : "dark";
+        localStorage.setItem(key, next);
+        localStorage.setItem("duemate-theme", next);
+        applyTheme();
+    }
+
+    window.toggleTheme = toggleTheme;
+
+    function ensureStaffTopbar() {
+        if (!isStaff || useMasterShell) return;
+        let topbar = document.querySelector(".topbar");
+        if (!topbar) {
+            topbar = document.createElement("header");
+            topbar.className = "topbar app-shell-staff-topbar";
+            topbar.innerHTML = '<div class="left-top"><button class="menu-btn" type="button" aria-label="Open menu">☰</button><div class="brand">Due<span>Mate</span></div></div><div class="top-actions"></div>';
+            document.body.insertBefore(topbar, document.body.firstElementChild);
+        }
+        const actions = topbar.querySelector(".top-actions") || topbar;
+        if (!topbar.querySelector(".menu-btn")) {
+            const menuButton = document.createElement("button");
+            menuButton.className = "menu-btn";
+            menuButton.type = "button";
+            menuButton.setAttribute("aria-label", "Open menu");
+            menuButton.textContent = "☰";
+            topbar.insertBefore(menuButton, topbar.firstChild);
+        }
+        if (!actions.querySelector("[data-shell-theme-toggle], [onclick*='toggleTheme']")) {
+            const themeButton = document.createElement("button");
+            themeButton.type = "button";
+            themeButton.dataset.shellThemeToggle = "true";
+            themeButton.setAttribute("aria-label", "Toggle light and dark theme");
+            themeButton.textContent = "☀️/🌙";
+            themeButton.addEventListener("click", toggleTheme);
+            actions.appendChild(themeButton);
+        }
+        if (!topbar.querySelector("[data-shell-date]")) {
+            const dateButton = document.createElement("button");
+            dateButton.type = "button";
+            dateButton.dataset.shellDate = "true";
+            dateButton.textContent = "📅 " + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" });
+            dateButton.addEventListener("click", () => { location.href = "calendar.html"; });
+            actions.insertBefore(dateButton, actions.firstChild);
+        }
+        if (!actions.textContent.includes("🔔")) {
+            const notifications = document.createElement("button");
+            notifications.type = "button";
+            notifications.setAttribute("aria-label", "Notifications");
+            notifications.textContent = "🔔";
+            notifications.addEventListener("click", () => { location.href = "notifications.html"; });
+            actions.appendChild(notifications);
+        }
+        if (!actions.textContent.includes("👤")) {
+            const profile = document.createElement("button");
+            profile.type = "button";
+            profile.setAttribute("aria-label", "Profile");
+            profile.textContent = "👤";
+            profile.addEventListener("click", () => { location.href = "profile.html"; });
+            actions.appendChild(profile);
+        }
+    }
+
     function ensureBackground() {
         const background = document.querySelector(".background");
         if (!background) return;
@@ -51,9 +123,48 @@
         }
     }
 
+    function ensureMasterShell() {
+        if (!useMasterShell) return;
+        document.body.classList.add("master-shell-page");
+
+        document.querySelectorAll(".topbar").forEach(function (topbar) {
+            topbar.classList.add("master-shell-original");
+        });
+
+        const topbar = document.createElement("header");
+        topbar.className = "topbar master-shell-topbar";
+        topbar.innerHTML = '<div class="left-top"><button class="menu-btn" type="button" aria-label="Open navigation">☰</button><div class="brand">Due<span>Mate</span></div></div><div class="top-actions"><button class="calendar-btn date-control" type="button" aria-label="Open calendar">📅 <span class="calendar-date-label" id="masterShellDate">Today</span></button><button class="notification-btn" type="button" aria-label="Open notifications">🔔<span class="notification-dot"></span></button><button class="master-shell-theme-btn" type="button" aria-label="Toggle theme">☀️/🌙</button><button class="master-shell-profile-btn" type="button" aria-label="Open profile">👤</button></div>';
+        document.body.insertBefore(topbar, document.body.firstElementChild);
+        topbar.querySelector(".calendar-btn").addEventListener("click", function () { location.href = "calendar.html"; });
+        topbar.querySelector(".notification-btn").addEventListener("click", function () { location.href = "notifications.html"; });
+        topbar.querySelector(".master-shell-theme-btn").addEventListener("click", toggleTheme);
+        topbar.querySelector(".master-shell-profile-btn").addEventListener("click", function () { location.href = "profile.html"; });
+
+        const overlay = document.createElement("div");
+        overlay.className = "drawer-overlay master-shell-drawer-overlay";
+        const drawer = document.createElement("aside");
+        drawer.className = "drawer master-shell-drawer";
+        const link = function (page) {
+            const current = page[0] === pageName ? " active" : "";
+            return '<a href="' + page[0] + '" class="nav-link' + current + '"><span class="nav-icon">' + page[2] + "</span>" + page[1] + "</a>";
+        };
+        drawer.innerHTML = '<div class="drawer-header"><div class="drawer-brand">Due<span>Mate</span></div><button class="drawer-close" type="button" aria-label="Close navigation">×</button></div><div class="nav-section-title">Main</div><nav class="nav-list">' + mainPages.map(link).join("") + '</nav><div class="nav-section-title">Account</div><nav class="nav-list">' + accountPages.map(link).join("") + '<button class="nav-link logout-link" type="button"><span class="nav-icon">🚪</span>Logout</button></nav>';
+        document.body.append(overlay, drawer);
+        overlay.addEventListener("click", closeMenu);
+        drawer.querySelector(".drawer-close").addEventListener("click", closeMenu);
+        drawer.querySelector(".logout-link").addEventListener("click", function () { sessionStorage.clear(); location.href = "index.html"; });
+        const removeLegacyControls = function () {
+            topbar.querySelectorAll("[data-shell-theme-toggle], [data-shell-date]").forEach(function (control) {
+                control.remove();
+            });
+        };
+        removeLegacyControls();
+        new MutationObserver(removeLegacyControls).observe(topbar, { childList: true, subtree: true });
+    }
+
     function openMenu() {
-        let drawer = document.querySelector(".app-shell-drawer");
-        let overlay = document.querySelector(".app-shell-drawer-overlay");
+        let drawer = document.querySelector(".master-shell-drawer, .app-shell-drawer");
+        let overlay = document.querySelector(".master-shell-drawer-overlay, .app-shell-drawer-overlay");
         if (drawer) {
             drawer.classList.toggle("show");
             overlay.classList.toggle("show");
@@ -102,8 +213,8 @@
     }
 
     function closeMenu() {
-        const drawer = document.querySelector(".app-shell-drawer");
-        const overlay = document.querySelector(".app-shell-drawer-overlay");
+        const drawer = document.querySelector(".master-shell-drawer, .app-shell-drawer");
+        const overlay = document.querySelector(".master-shell-drawer-overlay, .app-shell-drawer-overlay");
         if (drawer) drawer.classList.remove("show");
         if (overlay) overlay.classList.remove("show");
         document.body.style.overflow = "";
@@ -131,17 +242,22 @@
             subjects.innerHTML = '<span class="nav-icon">📚</span> Subjects';
             mainNav.appendChild(subjects);
         }
+        if (!mainNav.querySelector('a[href="assignments.html"]')) {
+            const assignments = document.createElement("a");
+            assignments.href = "assignments.html";
+            assignments.className = "nav-link";
+            assignments.innerHTML = '<span class="nav-icon">📄</span> Assignments';
+            mainNav.appendChild(assignments);
+        }
         Array.from(mainNav.querySelectorAll("a")).sort(function (left, right) {
             return desired.indexOf(left.getAttribute("href")) - desired.indexOf(right.getAttribute("href"));
         }).forEach(link => mainNav.appendChild(link));
 
         const icons = {
             "dashboard.html": "🏠",
-            "tasks.html": "📝",
             "calendar.html": "📅",
-            "timetable.html": "🗓️",
             "subjects.html": "📚",
-            "groups.html": "👥",
+            "assignments.html": "📄",
             "notifications.html": "🔔",
             "profile.html": "👤",
             "settings.html": "⚙️"
@@ -159,6 +275,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        document.body.classList.toggle("staff-shell", Boolean(isStaff));
         applyTheme();
         ensureBackground();
         normalizeNativeDrawer();
@@ -169,11 +286,9 @@
             const href = link && link.getAttribute("href");
             const symbols = {
                 "dashboard.html": "🏠",
-                "tasks.html": "📝",
                 "calendar.html": "📅",
-                "timetable.html": "🗓️",
                 "subjects.html": "📚",
-                "groups.html": "👥",
+                "assignments.html": "📄",
                 "notifications.html": "🔔",
                 "profile.html": "👤",
                 "settings.html": "⚙️"

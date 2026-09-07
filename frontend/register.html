@@ -1639,6 +1639,19 @@
 
                         </div>
 
+                        <!-- ROLE -->
+
+                        <div class="form-group">
+                            <label class="form-label" for="role">Account Type <span class="required">*</span></label>
+                            <div class="input-wrap">
+                                <span class="input-icon">🎓</span>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="student" selected>Student</option>
+                                    <option value="staff">Staff</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <!-- COLLEGE -->
 
                         <div class="form-group">
@@ -1657,16 +1670,15 @@
                                     🏫
                                 </span>
 
-                                <input
-                                    class="form-input"
-                                    type="text"
+                                <select
+                                    class="form-select"
                                     id="college"
                                     name="college"
-                                    placeholder="Enter your college"
-                                    autocomplete="organization"
-                                    maxlength="150"
                                     required
                                 >
+                                    <option value="" selected disabled>Select college</option>
+                                </select>
+                                <span class="select-arrow">▼</span>
 
                             </div>
 
@@ -1690,15 +1702,16 @@
                                     💻
                                 </span>
 
-                                <input
-                                    class="form-input"
-                                    type="text"
+                                <select
+                                    class="form-select"
                                     id="department"
                                     name="department"
-                                    placeholder="e.g. Information Technology"
-                                    maxlength="100"
                                     required
+                                    disabled
                                 >
+                                    <option value="" selected disabled>Select College First</option>
+                                </select>
+                                <span class="select-arrow">▼</span>
 
                             </div>
 
@@ -1713,7 +1726,7 @@
                                 for="year"
                             >
                                 Year of Study
-                                <span class="required">*</span>
+                                <span class="required" id="yearRequired">*</span>
                             </label>
 
                             <div class="input-wrap">
@@ -1753,10 +1766,6 @@
                                         4th Year
                                     </option>
 
-                                    <option value="5">
-                                        5th Year
-                                    </option>
-
                                 </select>
 
                                 <span class="select-arrow">
@@ -1793,40 +1802,6 @@
                                     placeholder="Enter your email ID"
                                     autocomplete="email"
                                     maxlength="255"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-                        <!-- MOBILE -->
-
-                        <div class="form-group">
-
-                            <label
-                                class="form-label"
-                                for="mobile"
-                            >
-                                Mobile Number
-                                <span class="required">*</span>
-                            </label>
-
-                            <div class="input-wrap">
-
-                                <span class="input-icon">
-                                    📱
-                                </span>
-
-                                <input
-                                    class="form-input"
-                                    type="tel"
-                                    id="mobile"
-                                    name="mobile"
-                                    placeholder="Enter 10-digit mobile number"
-                                    autocomplete="tel"
-                                    maxlength="10"
-                                    inputmode="numeric"
                                     required
                                 >
 
@@ -1880,6 +1855,16 @@
                                 id="passwordStrength"
                             ></div>
 
+                        </div>
+
+                        <!-- CONFIRM PASSWORD -->
+
+                        <div class="form-group full-width">
+                            <label class="form-label" for="confirmPassword">Confirm Password <span class="required">*</span></label>
+                            <div class="input-wrap">
+                                <span class="input-icon">🔐</span>
+                                <input class="form-input password-input" type="password" id="confirmPassword" autocomplete="new-password" required>
+                            </div>
                         </div>
 
                     </div>
@@ -2070,6 +2055,16 @@
 
         const API_BASE_URL = window.API_BASE_URL || window.API_BASE || "http://localhost:5000";
 
+        const collegeDepartments = {
+            "Government College of Technology (GCT), Coimbatore": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Electronics and Instrumentation Engineering", "Production Engineering", "Computer Science and Engineering", "Information Technology", "Industrial Biotechnology", "Computer Science and Engineering (Artificial Intelligence and Machine Learning)", "Artificial Intelligence and Machine Learning"],
+            "Government College of Engineering, Salem": ["Civil Engineering", "Computer Science and Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Mechanical Engineering", "Metallurgical Engineering"],
+            "Government College of Engineering, Tirunelveli": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Computer Science and Engineering", "Electronics and Instrumentation Engineering", "Industrial Biotechnology"],
+            "Government College of Engineering, Erode": ["Civil Engineering", "Mechanical Engineering", "Automobile Engineering", "Computer Science and Engineering", "Computer Science and Engineering (Data Science)", "Electronics and Communication Engineering", "Electrical and Electronics Engineering", "Information Technology"],
+            "Government College of Engineering, Bargur": ["Electronics and Communication Engineering", "Electrical and Electronics Engineering", "Computer Science and Engineering", "Mechanical Engineering", "Cyber Security"],
+            "Government College of Engineering, Srirangam": ["Civil Engineering", "Mechanical Engineering", "Computer Science and Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Mechatronics Engineering"],
+            "Government College of Engineering, Thanjavur": ["Civil Engineering", "Mechanical Engineering", "Electrical and Electronics Engineering", "Electronics and Communication Engineering", "Computer Science and Engineering", "Robotics and Automation Engineering"]
+        };
+
 
         /* =========================================================
            ELEMENTS
@@ -2080,6 +2075,9 @@
 
         const nameInput =
             document.getElementById("name");
+
+        const roleInput =
+            document.getElementById("role");
 
         const collegeInput =
             document.getElementById("college");
@@ -2093,11 +2091,14 @@
         const emailInput =
             document.getElementById("email");
 
-        const mobileInput =
-            document.getElementById("mobile");
-
         const passwordInput =
             document.getElementById("password");
+
+        const confirmPasswordInput =
+            document.getElementById("confirmPassword");
+
+        const yearRequired =
+            document.getElementById("yearRequired");
 
         const passwordToggle =
             document.getElementById("passwordToggle");
@@ -2124,6 +2125,38 @@
             document.querySelectorAll(
                 'input[name="theme"]'
             );
+
+        Object.keys(collegeDepartments).forEach(function (college) {
+            const option = document.createElement("option");
+            option.value = college;
+            option.textContent = college;
+            collegeInput.appendChild(option);
+        });
+
+        function loadDepartments() {
+            departmentInput.replaceChildren();
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = collegeInput.value ? "Select department" : "Select College First";
+            placeholder.selected = true;
+            placeholder.disabled = true;
+            departmentInput.appendChild(placeholder);
+            (collegeDepartments[collegeInput.value] || []).forEach(function (department) {
+                const option = document.createElement("option");
+                option.value = department;
+                option.textContent = department;
+                departmentInput.appendChild(option);
+            });
+            departmentInput.disabled = !collegeInput.value;
+            departmentInput.value = "";
+        }
+
+        collegeInput.addEventListener("change", function () {
+            loadDepartments();
+            clearMessage();
+        });
+
+        loadDepartments();
 
 
         /* =========================================================
@@ -2424,39 +2457,29 @@
            INPUT CLEANUP
         ========================================================= */
 
-        mobileInput.addEventListener(
-            "input",
-            function () {
-
-                this.value =
-                    this.value
-                        .replace(/\D/g, "")
-                        .slice(0, 10);
-
-                clearMessage();
-
-            }
-        );
-
 
         nameInput.addEventListener(
             "input",
             clearMessage
         );
 
-        collegeInput.addEventListener(
-            "input",
-            clearMessage
-        );
-
-        departmentInput.addEventListener(
-            "input",
-            clearMessage
-        );
+        departmentInput.addEventListener("change", clearMessage);
 
         yearInput.addEventListener(
             "change",
             clearMessage
+        );
+
+        roleInput.addEventListener(
+            "change",
+            function () {
+                const isStudent = roleInput.value === "student";
+                yearInput.required = isStudent;
+                yearRequired.style.display = isStudent ? "inline" : "none";
+                yearInput.closest(".form-group").style.display = isStudent ? "" : "none";
+                if (!isStudent) yearInput.value = "";
+                clearMessage();
+            }
         );
 
         emailInput.addEventListener(
@@ -2465,6 +2488,11 @@
         );
 
         passwordInput.addEventListener(
+            "input",
+            clearMessage
+        );
+
+        confirmPasswordInput.addEventListener(
             "input",
             clearMessage
         );
@@ -2502,18 +2530,18 @@
                     departmentInput.value.trim();
 
                 const year =
-                    yearInput.value;
+                    yearInput.value || null;
 
                 const email =
                     emailInput.value
                         .trim()
                         .toLowerCase();
 
-                const mobile =
-                    mobileInput.value.trim();
-
                 const password =
                     passwordInput.value;
+
+                const confirmPassword =
+                    confirmPasswordInput.value;
 
                 const theme =
                     getSelectedTheme();
@@ -2571,7 +2599,7 @@
                 }
 
 
-                if (!year) {
+                if (roleInput.value === "student" && !year) {
 
                     showMessage(
                         "Please select your year of study."
@@ -2607,30 +2635,6 @@
                 }
 
 
-                if (!mobile) {
-
-                    showMessage(
-                        "Please enter your mobile number."
-                    );
-
-                    mobileInput.focus();
-
-                    return;
-                }
-
-
-                if (!isValidMobile(mobile)) {
-
-                    showMessage(
-                        "Please enter a valid 10-digit mobile number."
-                    );
-
-                    mobileInput.focus();
-
-                    return;
-                }
-
-
                 if (!password) {
 
                     showMessage(
@@ -2639,6 +2643,12 @@
 
                     passwordInput.focus();
 
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showMessage("Password and confirm password must match.");
+                    confirmPasswordInput.focus();
                     return;
                 }
 
@@ -2703,6 +2713,9 @@
                                         name:
                                             name,
 
+                                        role:
+                                            roleInput.value,
+
                                         college:
                                             college,
 
@@ -2715,11 +2728,11 @@
                                         email:
                                             email,
 
-                                        mobile:
-                                            mobile,
-
                                         password:
                                             password,
+
+                                        confirmPassword:
+                                            confirmPassword,
 
                                         theme:
                                             theme
@@ -2960,7 +2973,7 @@
 
     </script>
 
-    <script src="app-shell.js"></script>
+    <script src="app-shell.js?v=20260907"></script>
 </body>
 
 </html>

@@ -91,7 +91,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 <link rel="stylesheet" href="app-shell.css">
 </head>
 <body>
-    <script src="app-shell.js"></script>
+    <script src="app-shell.js?v=20260907"></script>
 <div class="background">
 <div class="grid"></div><div class="glow glow-one"></div><div class="glow glow-two"></div><div class="glow glow-three"></div>
 <div class="study-float book-one">📚</div><div class="study-float book-two">📖</div><div class="study-float pencil">✏️</div><div class="study-float calendar-float">📅</div>
@@ -287,7 +287,7 @@ function updateCurrentDate(){
 }
 
 /* =========================
-   LOAD BACKEND TASKS
+    LOAD ASSIGNMENT DEADLINES
    ========================= */
 async function loadCalendarData(){
     const grid=document.getElementById("calendarGrid");
@@ -311,7 +311,7 @@ async function loadCalendarData(){
 
     try{
         const response=await window.authenticatedFetch(
-            `${API_BASE}/api/tasks`
+            `${API_BASE}/api/assignments`
         );
 
         if(!response.ok){
@@ -320,54 +320,37 @@ async function loadCalendarData(){
 
         const data=await response.json();
 
-        let tasks=[];
+        let assignments=[];
 
         if(Array.isArray(data)){
-            tasks=data;
-        }else if(data && Array.isArray(data.tasks)){
-            tasks=data.tasks;
+            assignments=data;
+        }else if(data && Array.isArray(data.assignments)){
+            assignments=data.assignments;
         }
 
-        calendarEvents=tasks
+        calendarEvents=assignments
             .filter(Boolean)
-            .map((task,index)=>{
-                const taskDate=normalizeTaskDate(
-                    task.task_date ||
-                    task.taskDate ||
-                    task.date ||
-                    task.dueDate
+            .map((assignment,index)=>{
+                const assignmentDate=normalizeTaskDate(
+                    assignment.due_date || assignment.dueDate
                 );
 
-                if(!taskDate) return null;
-
-                const priority=String(task.priority||"").toLowerCase();
-                const status=String(task.status||"").toLowerCase();
-
-                let type="task";
-
-                if(priority==="high" || priority==="urgent"){
-                    type="deadline";
-                }
-
-                if(status==="completed" || status==="done"){
-                    type="academic";
-                }
+                if(!assignmentDate) return null;
 
                 return {
                     id:String(
-                        task.id ||
-                        task._id ||
-                        `task-${taskDate}-${index}`
+                        assignment.id ||
+                        assignment._id ||
+                        `assignment-${assignmentDate}-${index}`
                     ),
-                    title:task.name || task.title || "Task",
-                    date:taskDate,
-                    time:task.task_time || task.taskTime || task.time || task.dueTime || "",
-                    type,
-                    subject:task.subject || "",
-                    description:task.description || task.details || "",
-                    status:task.status || "",
-                    priority:task.priority || "",
-                    source:"backend"
+                    title:assignment.title || "Assignment",
+                    date:assignmentDate,
+                    time:assignment.due_time || assignment.dueTime || "",
+                    type:"deadline",
+                    subject:assignment.subject || "",
+                    description:assignment.description || "",
+                    status:assignment.assignment_status || "",
+                    source:"assignment"
                 };
             })
             .filter(Boolean);
