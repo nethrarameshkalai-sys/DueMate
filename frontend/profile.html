@@ -2433,6 +2433,12 @@
     </style>
     <link rel="stylesheet" href="app-shell.css">
 
+    <style>
+        .registration-mobile-row,
+        .edit-mobile-group {
+            display: none;
+        }
+    </style>
 </head>
 
 
@@ -2621,7 +2627,7 @@
                     </p>
 
 
-                    <span class="student-badge">
+                    <span class="student-badge" id="roleBadge">
                         🎓 DueMate Student
                     </span>
 
@@ -2709,6 +2715,34 @@
                         </div>
 
 
+                        <!-- ACCOUNT TYPE -->
+
+                        <div class="info-row">
+
+                            <div class="info-icon">
+                                🎓
+                            </div>
+
+
+                            <div class="info-content">
+
+                                <span class="info-label">
+                                    Account Type
+                                </span>
+
+
+                                <span
+                                    class="info-value"
+                                    id="accountType"
+                                >
+                                    Not available
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
                         <!-- EMAIL -->
 
                         <div class="info-row">
@@ -2739,7 +2773,7 @@
 
                         <!-- MOBILE NUMBER -->
 
-                        <div class="info-row">
+                        <div class="info-row registration-mobile-row">
 
                             <div class="info-icon">
                                 📱
@@ -2823,7 +2857,7 @@
 
                         <!-- YEAR / SEMESTER -->
 
-                        <div class="info-row">
+                        <div class="info-row registration-year-row">
 
                             <div class="info-icon">
                                 📖
@@ -3119,7 +3153,7 @@
 
             <!-- FULL NAME -->
 
-            <div class="edit-group">
+            <div class="edit-group edit-mobile-group">
 
                 <label
                     class="edit-label"
@@ -3357,6 +3391,18 @@
         const profileEmail =
             document.getElementById(
                 "profileEmail"
+            );
+
+
+        const roleBadge =
+            document.getElementById(
+                "roleBadge"
+            );
+
+
+        const accountType =
+            document.getElementById(
+                "accountType"
             );
 
 
@@ -3598,6 +3644,7 @@
             }
 
             const name = getValue(user, ["name", "fullName", "fullname", "username"], "Student");
+            const role = getValue(user, ["role", "accountType", "account_type"], "student");
             const email = getValue(user, ["email", "emailId", "emailID", "user_email", "userEmail"], "Not available");
             const mobile = getValue(user, ["mobile", "mobileNumber", "phone", "phoneNumber"], "Not available");
             const studentId = getValue(user, ["studentId", "studentID", "rollNumber", "registerNumber"], "Not available");
@@ -3608,6 +3655,7 @@
 
             return {
                 name,
+                role,
                 email,
                 mobile,
                 studentId,
@@ -3691,12 +3739,17 @@
 
             profileName.textContent = data.name;
             profileEmail.textContent = data.email;
+            const isStaff = ["teacher", "staff"].includes(String(data.role).toLowerCase());
+            const roleLabel = isStaff ? "Staff" : "Student";
+            roleBadge.textContent = isStaff ? "👩‍🏫 DueMate Staff" : "🎓 DueMate Student";
+            accountType.textContent = roleLabel;
             fullName.textContent = data.name;
             emailAddress.textContent = data.email;
             mobileNumber.textContent = data.mobile;
             collegeName.textContent = data.college;
             department.textContent = data.department;
             semester.textContent = data.year;
+            document.querySelector(".registration-year-row").style.display = isStaff ? "none" : "";
             avatarLetter.textContent = getInitial(data.name);
         }
 

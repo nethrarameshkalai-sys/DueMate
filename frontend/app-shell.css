@@ -146,3 +146,103 @@ body {
     .background .study-float { animation: none; }
     .app-shell-drawer { transition: none; }
 }
+
+/* Shared DueMate presentation for Staff workspace pages. */
+body.staff-page {
+    --bg: #f5f6ff;
+    --surface: rgba(255,255,255,0.72);
+    --surface-solid: #ffffff;
+    --text: #25263a;
+    --muted: #777b91;
+    --border: rgba(255,255,255,0.9);
+    --purple: #756cff;
+    --mint: #55d5b0;
+    --pink: #ff86b6;
+    --yellow: #ffd76b;
+    --grid: rgba(91,99,150,0.055);
+    --shadow: rgba(60,66,120,0.14);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+}
+
+body.staff-page.dark {
+    --bg: #0b1020;
+    --surface: rgba(20,26,49,0.72);
+    --surface-solid: #151b32;
+    --text: #f4f5ff;
+    --muted: #aeb3ca;
+    --border: rgba(255,255,255,0.09);
+    --purple: #958cff;
+    --mint: #64dfc0;
+    --pink: #ff91bf;
+    --yellow: #ffe08a;
+    --grid: rgba(185,195,255,0.035);
+    --shadow: rgba(0,0,0,0.42);
+}
+
+body.staff-page .background { position: fixed; inset: 0; z-index: -10; overflow: hidden; background: var(--bg); }
+body.staff-page .background .grid { position: absolute; inset: -100px; background-image: linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size: 44px 44px; transform: perspective(500px) rotateX(55deg) scale(1.4); transform-origin: center bottom; mask-image: linear-gradient(to bottom,transparent 5%,black 35%,black 75%,transparent 100%); animation: staffGridMove 30s linear infinite; }
+@keyframes staffGridMove { from { background-position: 0 0,0 0; } to { background-position: 44px 44px,44px 44px; } }
+body.staff-page .background .glow { position: absolute; border-radius: 50%; filter: blur(85px); pointer-events: none; opacity: .28; }
+body.staff-page .background .glow-one { width: 430px; height: 430px; left: -170px; top: -160px; background: var(--purple); animation: staffGlowOne 18s ease-in-out infinite alternate; }
+body.staff-page .background .glow-two { width: 400px; height: 400px; right: -170px; top: 25%; background: var(--mint); animation: staffGlowTwo 22s ease-in-out infinite alternate; }
+body.staff-page .background .glow-three { width: 380px; height: 380px; left: 35%; bottom: -220px; background: var(--pink); animation: staffGlowThree 25s ease-in-out infinite alternate; }
+@keyframes staffGlowOne { to { transform: translate(240px,230px) scale(1.15); } }
+@keyframes staffGlowTwo { to { transform: translate(-220px,130px) scale(1.12); } }
+@keyframes staffGlowThree { to { transform: translate(180px,-130px) scale(1.1); } }
+body.staff-page .background .study-float { position: absolute; pointer-events: none; user-select: none; opacity: .14; animation: staffFloat 10s ease-in-out infinite; }
+body.staff-page .background .book-one { left: 7%; top: 20%; font-size: 32px; }
+body.staff-page .background .book-two { right: 7%; bottom: 18%; font-size: 30px; animation-delay: -4s; }
+body.staff-page .background .pencil { left: 48%; top: 12%; font-size: 26px; animation-delay: -7s; }
+body.staff-page .background .calendar-float { right: 18%; top: 65%; font-size: 27px; animation-delay: -2s; }
+@keyframes staffFloat { 0%,100% { transform: translate3d(0,0,0) rotate(-5deg); } 50% { transform: translate3d(10px,-18px,0) rotate(7deg); } }
+body.staff-page .particles, body.staff-page .stars { position: absolute; inset: 0; pointer-events: none; }
+body.staff-page .particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); opacity: .3; animation: staffParticleFloat 16s linear infinite; }
+body.staff-page .particle:nth-child(1) { left: 8%; top: 80%; animation-duration: 15s; }
+body.staff-page .particle:nth-child(2) { left: 22%; top: 72%; animation-duration: 18s; }
+body.staff-page .particle:nth-child(3) { left: 40%; top: 88%; animation-duration: 14s; }
+body.staff-page .particle:nth-child(4) { left: 58%; top: 80%; animation-duration: 20s; }
+body.staff-page .particle:nth-child(5) { left: 76%; top: 84%; animation-duration: 17s; }
+body.staff-page .particle:nth-child(6) { left: 91%; top: 72%; animation-duration: 16s; }
+@keyframes staffParticleFloat { 0% { transform: translateY(80px) scale(0); opacity: 0; } 20% { opacity: .35; } 70% { transform: translateY(-220px) translateX(35px) scale(1); } 100% { transform: translateY(-430px) translateX(-25px) scale(0); opacity: 0; } }
+body.staff-page .stars { opacity: 0; transition: opacity .7s ease; }
+body.staff-page.dark .stars { opacity: 1; }
+body.staff-page .star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff; animation: staffTwinkle 4s ease-in-out infinite; }
+body.staff-page .star:nth-child(1) { left: 12%; top: 18%; } body.staff-page .star:nth-child(2) { left: 28%; top: 34%; animation-delay: -1s; } body.staff-page .star:nth-child(3) { left: 47%; top: 14%; animation-delay: -2s; } body.staff-page .star:nth-child(4) { left: 66%; top: 28%; animation-delay: -3s; } body.staff-page .star:nth-child(5) { left: 84%; top: 12%; animation-delay: -.5s; }
+@keyframes staffTwinkle { 0%,100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.5); } }
+
+body.dark select,
+body.dark option {
+    background-color: #151b32 !important;
+    color: #f4f5ff !important;
+}
+
+body.staff-page .app-shell-staff-topbar { width: min(1180px,calc(100% - 44px)); margin: 18px auto 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+body.staff-page .app-shell-staff-topbar .left-top, body.staff-page .app-shell-staff-topbar .top-actions { display: flex; align-items: center; gap: 10px; }
+body.staff-page .app-shell-staff-topbar .menu-btn, body.staff-page .app-shell-staff-topbar .top-actions button { width: 45px; min-height: 45px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 30px var(--shadow); backdrop-filter: blur(15px); transition: transform .25s ease,background .25s ease; }
+body.staff-page .app-shell-staff-topbar .menu-btn:hover, body.staff-page .app-shell-staff-topbar .top-actions button:hover { transform: translateY(-2px); background: rgba(117,108,255,.08); }
+body.staff-page .app-shell-staff-topbar .brand { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+body.staff-page .app-shell-staff-topbar .brand span { color: var(--purple); }
+body.staff-page .app-shell-staff-topbar .top-actions button[data-shell-date] { width: auto; min-width: 132px; font-size: 11px; font-weight: 800; }
+body.staff-page .page { width: min(1180px,100%); max-width: none; margin: 0 auto; padding: 0 22px 70px; position: relative; }
+body.staff-page .eyebrow { color: var(--purple); font: 800 10px "Segoe UI",Arial,sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+body.staff-page h1 { margin: 0 0 8px; color: var(--text); font: 800 clamp(30px,5vw,46px)/1.08 "Segoe UI",Inter,Arial,sans-serif; letter-spacing: -1.7px; }
+body.staff-page .intro { color: var(--muted); font: 14px "Segoe UI",Inter,Arial,sans-serif; }
+body.staff-page .toolbar, body.staff-page .filters { display: flex; gap: 10px; margin: 22px 0; }
+body.staff-page .toolbar input, body.staff-page .filters input, body.staff-page .filters select { flex: 1; width: 100%; border: 1px solid rgba(120,125,160,.18); border-radius: 12px; padding: 12px 13px; outline: none; color: var(--text); background: rgba(120,125,160,.055); font: 12px "Segoe UI",Inter,Arial,sans-serif; }
+body.staff-page .panel, body.staff-page .item { padding: 22px; border: 1px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: 0 18px 45px var(--shadow); backdrop-filter: blur(18px); animation: staffCardFloat 7s ease-in-out infinite; }
+body.staff-page .item { margin-bottom: 12px; padding: 18px; }
+@keyframes staffCardFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+body.staff-page .panel h2, body.staff-page .item h2 { margin: 0 0 16px; color: var(--text); font: 800 20px "Segoe UI",Inter,Arial,sans-serif; letter-spacing: -.5px; }
+body.staff-page .meta { color: var(--muted); font: 11px/1.55 "Segoe UI",Inter,Arial,sans-serif; }
+body.staff-page table { width: 100%; border-collapse: collapse; color: var(--text); font: 12px "Segoe UI",Inter,Arial,sans-serif; }
+body.staff-page th, body.staff-page td { padding: 13px 10px; border-bottom: 1px solid rgba(120,125,160,.12); text-align: left; }
+body.staff-page th { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+body.staff-page button, body.staff-page .button { border: 0; border-radius: 12px; padding: 10px 13px; background: var(--purple); color: #fff; font: 800 11px "Segoe UI",Inter,Arial,sans-serif; box-shadow: 0 8px 20px rgba(117,108,255,.2); transition: transform .2s ease,background .2s ease; }
+body.staff-page button:hover, body.staff-page .button:hover { transform: translateY(-2px); }
+body.staff-page button.secondary, body.staff-page .button.secondary { background: rgba(117,108,255,.1); color: var(--purple); box-shadow: none; }
+body.staff-page .empty { color: var(--muted); font: 11px/1.5 "Segoe UI",Inter,Arial,sans-serif; }
+@media (max-width:800px) { body.staff-page .app-shell-staff-topbar { width: calc(100% - 28px); margin: 15px auto 24px; } body.staff-page .app-shell-staff-topbar .top-actions button[data-shell-date] { min-width: 45px; width: 45px; font-size: 0; } body.staff-page .page { padding: 0 14px 50px; } body.staff-page .toolbar, body.staff-page .filters { flex-direction: column; } body.staff-page table { font-size: 11px; } body.staff-page th, body.staff-page td { padding: 10px 5px; } }

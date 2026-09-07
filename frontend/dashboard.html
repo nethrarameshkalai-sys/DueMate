@@ -4035,6 +4035,41 @@
            ===================================================== */
 
         let dashboardTasks = [];
+        let dashboardAssignments = [];
+
+
+        async function loadDashboardAssignments() {
+            const email = getCurrentUserEmail();
+            if (!email) {
+                dashboardAssignments = [];
+                renderDashboardTasks();
+                return;
+            }
+
+            try {
+                const response = await window.authenticatedFetch(
+                    (window.API_BASE || "http://localhost:5000") + "/api/assignments",
+                    { method: "GET", cache: "no-store" }
+                );
+                if (!response.ok) throw new Error("Unable to load assignments");
+                const data = await response.json();
+                dashboardAssignments = (data.assignments || []).map(function (assignment) {
+                    return {
+                        ...assignment,
+                        isAssignment: true,
+                        name: assignment.title,
+                        date: assignment.due_date,
+                        time: assignment.due_time || "",
+                        subject: `${assignment.subject || "General"} · Staff: ${assignment.teacher_name || "Staff"}`
+                    };
+                });
+                renderDashboardTasks();
+            } catch (error) {
+                console.error("Dashboard assignment loading error:", error);
+                dashboardAssignments = [];
+                renderDashboardTasks();
+            }
+        }
 
 
         async function loadDashboardTasks() {
@@ -4249,8 +4284,10 @@
                 getDateKey(tomorrow);
 
 
+            const scheduleItems = dashboardTasks.concat(dashboardAssignments);
+
             const todayTasks =
-                dashboardTasks.filter(
+                scheduleItems.filter(
                     function(task) {
 
                         return (
@@ -4264,7 +4301,7 @@
 
 
             const tomorrowTasks =
-                dashboardTasks.filter(
+                scheduleItems.filter(
                     function(task) {
 
                         return (
@@ -4417,17 +4454,15 @@
                             <div class="content-item-info">
 
                                 <div class="content-item-title">
-                                    ${escapeHTML(
-                                        getTaskName(task)
-                                    )}
+                                    ${escapeHTML(getTaskName(task))}
                                 </div>
 
                                 <div class="content-item-meta">
-                                    ${escapeHTML(
-                                        getTaskSubject(task)
-                                    )}
+                                    ${escapeHTML(getTaskSubject(task))}
                                     ${time ? " • " + escapeHTML(time) : ""}
                                 </div>
+
+                                ${task.isAssignment ? `<div class="content-item-meta">Due ${escapeHTML(normalizeTaskDate(getTaskDate(task)))} · Assigned work</div>` : ""}
 
                             </div>
 
@@ -4441,10 +4476,11 @@
                         item.addEventListener(
                             "click",
                             function() {
-
-                                openTaskDetail(
-                                    task
-                                );
+                                if (task.isAssignment) {
+                                    window.location.href = "assignments.html";
+                                    return;
+                                }
+                                openTaskDetail(task);
 
                             }
                         );
@@ -4973,6 +5009,7 @@
                 renderDashboardTimetable();
                 renderSubjects();
                 loadDashboardTasks();
+                loadDashboardAssignments();
             }
         });
 
@@ -4982,6 +5019,7 @@
             renderDashboardTimetable();
             renderSubjects();
             loadDashboardTasks();
+            loadDashboardAssignments();
         });
 
 
@@ -4999,6 +5037,7 @@
 
         renderDashboardTimetable();
         loadDashboardTasks();
+        loadDashboardAssignments();
 
     </script>
 </body>

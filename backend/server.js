@@ -3049,7 +3049,7 @@ app.get("/api/assignments", verifyToken, (req, res) => {
                 JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
                 WHERE a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department
                 GROUP BY a.id ORDER BY a.created_at DESC`
-            : `SELECT a.*, s.id AS submission_id, s.file_name AS submission_file_name,
+            : `SELECT a.*, staff_teacher.name AS teacher_name, s.id AS submission_id, s.file_name AS submission_file_name,
                 s.status AS submission_status, s.feedback AS submission_feedback, s.submitted_at, s.viewed_at,
                 CASE WHEN s.status = 'needs_correction' THEN 'needs_correction'
                 WHEN s.status IN ('verified', 'completed') THEN s.status
@@ -3058,6 +3058,7 @@ app.get("/api/assignments", verifyToken, (req, res) => {
                 WHEN a.due_date < CURRENT_DATE THEN 'overdue'
                 ELSE 'pending' END AS assignment_status
                 FROM assignments a JOIN users u ON u.email = ?
+                LEFT JOIN users staff_teacher ON staff_teacher.email = a.teacher_email AND staff_teacher.role = 'teacher'
                 LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_email = u.email
                 WHERE (a.college IS NULL OR a.college = u.college)
                 AND (a.department IS NULL OR a.department = u.department)

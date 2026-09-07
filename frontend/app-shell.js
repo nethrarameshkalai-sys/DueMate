@@ -4,7 +4,7 @@
     const isStaff = sessionUser && sessionUser.role === "teacher";
     const pageName = location.pathname.split("/").pop() || "dashboard.html";
     const useMasterShell = false;
-    const removedPages = ["tasks.html", "timetable.html", "groups.html", "settings.html"];
+    const removedPages = ["groups.html", "subjects.html", "settings.html"];
     if (removedPages.includes(pageName)) {
         location.replace("dashboard.html");
         return;
@@ -83,11 +83,13 @@
             themeButton.addEventListener("click", toggleTheme);
             actions.appendChild(themeButton);
         }
+        const existingDateButton = topbar.querySelector(".calendar-btn");
+        if (existingDateButton) existingDateButton.dataset.shellDate = "true";
         if (!topbar.querySelector("[data-shell-date]")) {
             const dateButton = document.createElement("button");
             dateButton.type = "button";
             dateButton.dataset.shellDate = "true";
-            dateButton.textContent = "📅 " + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" });
+            dateButton.innerHTML = "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" }) + "</span>";
             dateButton.addEventListener("click", () => { location.href = "calendar.html"; });
             actions.insertBefore(dateButton, actions.firstChild);
         }
@@ -230,18 +232,12 @@
     }
 
     function normalizeNativeDrawer() {
+        if (isStaff) return;
         const drawer = document.getElementById("drawer");
         if (!drawer) return;
         const mainNav = drawer.querySelector(".nav-list");
         if (!mainNav) return;
         const desired = mainPages.map(page => page[0]);
-        if (!mainNav.querySelector('a[href="subjects.html"]')) {
-            const subjects = document.createElement("a");
-            subjects.href = "subjects.html";
-            subjects.className = "nav-link";
-            subjects.innerHTML = '<span class="nav-icon">📚</span> Subjects';
-            mainNav.appendChild(subjects);
-        }
         if (!mainNav.querySelector('a[href="assignments.html"]')) {
             const assignments = document.createElement("a");
             assignments.href = "assignments.html";
@@ -256,7 +252,6 @@
         const icons = {
             "dashboard.html": "🏠",
             "calendar.html": "📅",
-            "subjects.html": "📚",
             "assignments.html": "📄",
             "notifications.html": "🔔",
             "profile.html": "👤",
@@ -274,8 +269,11 @@
         });
     }
 
+    if (isStaff) ensureStaffTopbar();
+
     document.addEventListener("DOMContentLoaded", function () {
         document.body.classList.toggle("staff-shell", Boolean(isStaff));
+        ensureStaffTopbar();
         applyTheme();
         ensureBackground();
         normalizeNativeDrawer();
@@ -287,7 +285,6 @@
             const symbols = {
                 "dashboard.html": "🏠",
                 "calendar.html": "📅",
-                "subjects.html": "📚",
                 "assignments.html": "📄",
                 "notifications.html": "🔔",
                 "profile.html": "👤",
