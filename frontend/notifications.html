@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications - DueMate</title>
-    <link rel="stylesheet" href="styles.css">
-
+    <link rel="stylesheet" href="app-shell.css?v=20260916">
      <style>
           /* =====================================================
               DUE MATE - NOTIFICATIONS
@@ -1679,7 +1678,7 @@
 
 
 <body>
-    <script src="app-shell.js?v=20260907"></script>
+    <script src="app-shell.js?v=20260917"></script>
 
 
     <!-- =====================================================
@@ -1823,8 +1822,8 @@
                 </h1>
 
                 <p>
-                    Stay updated with your tasks,
-                    deadlines, timetable and groups.
+                    Stay updated with assignment deadlines,
+                    submissions and verification updates.
                 </p>
 
             </div>
@@ -1886,48 +1885,6 @@
                 </button>
 
 
-                <button
-                    class="filter-btn"
-                    type="button"
-                    data-filter="tasks"
-                    onclick="setFilter('tasks', this)">
-
-                    Tasks
-
-                </button>
-
-
-                <button
-                    class="filter-btn"
-                    type="button"
-                    data-filter="groups"
-                    onclick="setFilter('groups', this)">
-
-                    Groups
-
-                </button>
-
-
-                <button
-                    class="filter-btn"
-                    type="button"
-                    data-filter="timetable"
-                    onclick="setFilter('timetable', this)">
-
-                    Timetable
-
-                </button>
-
-
-                <button
-                    class="filter-btn"
-                    type="button"
-                    data-filter="challenges"
-                    onclick="setFilter('challenges', this)">
-
-                    Challenges
-
-                </button>
 
             </div>
 
@@ -2002,10 +1959,9 @@
 
                 <p>
                     There are no notifications to show
-                    right now. New task reminders,
-                    timetable updates, group activity
-                    and challenge notifications will
-                    appear here.
+                    right now. Assignment deadlines,
+                    student submissions and verification
+                    updates will appear here.
                 </p>
 
             </div>
@@ -2993,7 +2949,7 @@
             menu.style.cssText = "position:fixed;top:76px;left:3%;z-index:20;padding:18px;min-width:210px;border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:0 18px 45px var(--shadow);backdrop-filter:blur(18px);display:grid;gap:8px";
             menu.innerHTML = [
                 ["dashboard.html", "Dashboard"],
-                ["groups.html", "Groups"], ["profile.html", "Profile"],
+                ["profile.html", "Profile"],
                 ["settings.html", "Settings"]
             ].map(item => `<a href="${item[0]}" style="padding:9px 10px;color:var(--text);text-decoration:none">${item[1]}</a>`).join("");
             document.body.appendChild(menu);

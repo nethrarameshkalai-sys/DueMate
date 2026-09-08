@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DueMate - Student Registration">
+    <meta name="description" content="DueMate - Assignment Management Registration">
     <title>DueMate - Create Account</title>
     <script src="config.js"></script>
 
@@ -1535,10 +1535,9 @@
                 </h1>
 
                 <p class="intro-description">
-                    Create your student account and keep
-                    your academic life organized — from
-                    classes and subjects to tasks,
-                    deadlines and groups.
+                    Create your DueMate account and manage
+                    assignments, deadlines, submissions,
+                    and verification in one place.
                 </p>
 
                 <div class="benefits">
@@ -1547,7 +1546,7 @@
                         <div class="benefit-icon">📅</div>
 
                         <span>
-                            Organize your timetable and classes
+                            Receive and manage assignments
                         </span>
                     </div>
 
@@ -1555,7 +1554,7 @@
                         <div class="benefit-icon">📝</div>
 
                         <span>
-                            Track assignments and deadlines
+                            Track assignment deadlines
                         </span>
                     </div>
 
@@ -1563,7 +1562,7 @@
                         <div class="benefit-icon">📊</div>
 
                         <span>
-                            Monitor your academic progress
+                            Submit assignment files
                         </span>
                     </div>
 
@@ -1571,7 +1570,7 @@
                         <div class="benefit-icon">👥</div>
 
                         <span>
-                            Connect and collaborate through groups
+                            Track submission and verification status
                         </span>
                     </div>
 
@@ -1870,77 +1869,6 @@
                     </div>
 
                     <!-- =================================================
-                         THEME
-                    ================================================= -->
-
-                    <div class="theme-section">
-
-                        <span class="theme-title">
-                            Choose your theme
-                        </span>
-
-                        <div class="theme-options">
-
-                            <div class="theme-option">
-
-                                <input
-                                    type="radio"
-                                    id="themeLight"
-                                    name="theme"
-                                    value="light"
-                                    checked
-                                >
-
-                                <label
-                                    class="theme-label"
-                                    for="themeLight"
-                                >
-                                    ☀️ Light
-                                </label>
-
-                            </div>
-
-                            <div class="theme-option">
-
-                                <input
-                                    type="radio"
-                                    id="themeDark"
-                                    name="theme"
-                                    value="dark"
-                                >
-
-                                <label
-                                    class="theme-label"
-                                    for="themeDark"
-                                >
-                                    🌙 Dark
-                                </label>
-
-                            </div>
-
-                            <div class="theme-option">
-
-                                <input
-                                    type="radio"
-                                    id="themeSystem"
-                                    name="theme"
-                                    value="system"
-                                >
-
-                                <label
-                                    class="theme-label"
-                                    for="themeSystem"
-                                >
-                                    💻 System
-                                </label>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <!-- =================================================
                          TERMS
                     ================================================= -->
 
@@ -2121,11 +2049,6 @@
         const toast =
             document.getElementById("toast");
 
-        const themeInputs =
-            document.querySelectorAll(
-                'input[name="theme"]'
-            );
-
         Object.keys(collegeDepartments).forEach(function (college) {
             const option = document.createElement("option");
             option.value = college;
@@ -2158,111 +2081,6 @@
 
         loadDepartments();
 
-
-        /* =========================================================
-           THEME
-        ========================================================= */
-
-        function getSelectedTheme() {
-
-            const selected =
-                document.querySelector(
-                    'input[name="theme"]:checked'
-                );
-
-            return selected
-                ? selected.value
-                : "light";
-        }
-
-
-        function applyTheme(theme) {
-
-            if (theme === "dark") {
-
-                document.body.classList.add("dark");
-
-                return;
-            }
-
-            if (theme === "system") {
-
-                const prefersDark =
-                    window.matchMedia(
-                        "(prefers-color-scheme: dark)"
-                    ).matches;
-
-                document.body.classList.toggle(
-                    "dark",
-                    prefersDark
-                );
-
-                return;
-            }
-
-            document.body.classList.remove("dark");
-        }
-
-
-        /* =========================================================
-           THEME PREVIEW
-        ========================================================= */
-
-        themeInputs.forEach(
-            function (input) {
-
-                input.addEventListener(
-                    "change",
-                    function () {
-
-                        const theme =
-                            getSelectedTheme();
-
-                        applyTheme(theme);
-
-                    }
-                );
-
-            }
-        );
-
-
-        /* =========================================================
-           LOAD THEME
-        ========================================================= */
-
-        function loadTheme() {
-
-            const savedTheme =
-                localStorage.getItem(
-                    "duemate-theme"
-                );
-
-            if (
-                savedTheme === "light" ||
-                savedTheme === "dark" ||
-                savedTheme === "system"
-            ) {
-
-                const radio =
-                    document.querySelector(
-                        `input[name="theme"][value="${savedTheme}"]`
-                    );
-
-                if (radio) {
-                    radio.checked = true;
-                }
-
-                applyTheme(savedTheme);
-
-            } else {
-
-                applyTheme("light");
-
-            }
-        }
-
-        loadTheme();
 
 
         /* =========================================================
@@ -2543,10 +2361,6 @@
                 const confirmPassword =
                     confirmPasswordInput.value;
 
-                const theme =
-                    getSelectedTheme();
-
-
                 /* ================================================
                    VALIDATION
                 ================================================= */
@@ -2732,10 +2546,7 @@
                                             password,
 
                                         confirmPassword:
-                                            confirmPassword,
-
-                                        theme:
-                                            theme
+                                            confirmPassword
 
                                     })
                             }
@@ -2784,16 +2595,6 @@
                         );
 
                     }
-
-
-                    /* ============================================
-                       SAVE THEME
-                    ============================================= */
-
-                    localStorage.setItem(
-                        "duemate-theme",
-                        theme
-                    );
 
 
                     /* ============================================
@@ -2927,32 +2728,6 @@
 
 
         /* =========================================================
-           SYSTEM THEME CHANGE
-        ========================================================= */
-
-        const systemTheme =
-            window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            );
-
-
-        systemTheme.addEventListener(
-            "change",
-            function () {
-
-                if (
-                    getSelectedTheme() === "system"
-                ) {
-
-                    applyTheme("system");
-
-                }
-
-            }
-        );
-
-
-        /* =========================================================
            INITIAL FOCUS
         ========================================================= */
 
@@ -2973,7 +2748,7 @@
 
     </script>
 
-    <script src="app-shell.js?v=20260907"></script>
+    <script src="app-shell.js?v=20260917"></script>
 </body>
 
 </html>

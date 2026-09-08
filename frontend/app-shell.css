@@ -220,6 +220,49 @@ body.dark option {
     color: #f4f5ff !important;
 }
 
+/* Dashboard-matched top-bar controls for every page. */
+body .topbar .menu-btn,
+body .topbar .calendar-btn,
+body .topbar .notification-btn {
+    width: 45px !important;
+    height: 45px !important;
+    min-height: 45px !important;
+    padding: 0 !important;
+    border: 1px solid var(--border, rgba(255,255,255,0.9)) !important;
+    border-radius: 14px !important;
+    background: var(--surface, rgba(255,255,255,0.72)) !important;
+    color: var(--text, #25263a) !important;
+    box-shadow: 0 12px 30px var(--shadow, rgba(60,66,120,0.14)) !important;
+    backdrop-filter: blur(15px) !important;
+    transition: transform .25s ease, background .25s ease;
+}
+
+body .topbar .menu-btn:hover,
+body .topbar .calendar-btn:hover,
+body .topbar .notification-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(117,108,255,0.08) !important;
+}
+
+body .topbar .calendar-btn.date-control,
+body .topbar .calendar-btn:has(.calendar-date-label),
+body .topbar .calendar-btn:has(#currentDate),
+body .topbar .calendar-btn:has(#profileCurrentDate) {
+    width: auto !important;
+    min-width: 132px !important;
+    padding: 0 12px !important;
+}
+
+body .topbar .calendar-date-label,
+body .topbar #currentDate,
+body .topbar #profileCurrentDate {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 800;
+}
+
 body.staff-page .app-shell-staff-topbar { width: min(1180px,calc(100% - 44px)); margin: 18px auto 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 body.staff-page .app-shell-staff-topbar .left-top, body.staff-page .app-shell-staff-topbar .top-actions { display: flex; align-items: center; gap: 10px; }
 body.staff-page .app-shell-staff-topbar .menu-btn, body.staff-page .app-shell-staff-topbar .top-actions button { width: 45px; min-height: 45px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 30px var(--shadow); backdrop-filter: blur(15px); transition: transform .25s ease,background .25s ease; }

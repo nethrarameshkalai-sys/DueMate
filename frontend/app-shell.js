@@ -43,6 +43,16 @@
         const selected = theme();
         const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.classList.toggle("dark", selected === "dark" || (selected === "system" && systemDark));
+        updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+        const icon = document.body.classList.contains("dark") ? "☀️" : "🌙";
+        document.querySelectorAll(".topbar [data-shell-theme-toggle], .topbar [onclick*='toggleTheme']").forEach(function (button) {
+            button.textContent = icon;
+            button.setAttribute("aria-label", document.body.classList.contains("dark") ? "Switch to light theme" : "Switch to dark theme");
+            button.title = button.getAttribute("aria-label");
+        });
     }
 
     function toggleTheme() {
@@ -79,7 +89,7 @@
             themeButton.type = "button";
             themeButton.dataset.shellThemeToggle = "true";
             themeButton.setAttribute("aria-label", "Toggle light and dark theme");
-            themeButton.textContent = "☀️/🌙";
+            themeButton.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
             themeButton.addEventListener("click", toggleTheme);
             actions.appendChild(themeButton);
         }
@@ -135,7 +145,7 @@
 
         const topbar = document.createElement("header");
         topbar.className = "topbar master-shell-topbar";
-        topbar.innerHTML = '<div class="left-top"><button class="menu-btn" type="button" aria-label="Open navigation">☰</button><div class="brand">Due<span>Mate</span></div></div><div class="top-actions"><button class="calendar-btn date-control" type="button" aria-label="Open calendar">📅 <span class="calendar-date-label" id="masterShellDate">Today</span></button><button class="notification-btn" type="button" aria-label="Open notifications">🔔<span class="notification-dot"></span></button><button class="master-shell-theme-btn" type="button" aria-label="Toggle theme">☀️/🌙</button><button class="master-shell-profile-btn" type="button" aria-label="Open profile">👤</button></div>';
+        topbar.innerHTML = '<div class="left-top"><button class="menu-btn" type="button" aria-label="Open navigation">☰</button><div class="brand">Due<span>Mate</span></div></div><div class="top-actions"><button class="calendar-btn date-control" type="button" aria-label="Open calendar">📅 <span class="calendar-date-label" id="masterShellDate">Today</span></button><button class="notification-btn" type="button" aria-label="Open notifications">🔔<span class="notification-dot"></span></button><button class="master-shell-theme-btn" data-shell-theme-toggle="true" type="button" aria-label="Switch to dark theme">🌙</button><button class="master-shell-profile-btn" type="button" aria-label="Open profile">👤</button></div>';
         document.body.insertBefore(topbar, document.body.firstElementChild);
         topbar.querySelector(".calendar-btn").addEventListener("click", function () { location.href = "calendar.html"; });
         topbar.querySelector(".notification-btn").addEventListener("click", function () { location.href = "notifications.html"; });
@@ -222,6 +232,10 @@
         document.body.style.overflow = "";
     }
 
+    if (isStaff && ["staff-students.html", "staff-verification.html"].includes(pageName)) {
+        ensureStaffTopbar();
+    }
+
     function updateNotificationBadge() {
         const showBadge = localStorage.getItem("duemate-notification-badge") === "show";
         document.querySelectorAll(".notification-btn .notification-dot").forEach(function (dot) {
@@ -268,8 +282,6 @@
             icon.textContent = "🚪";
         });
     }
-
-    if (isStaff) ensureStaffTopbar();
 
     document.addEventListener("DOMContentLoaded", function () {
         document.body.classList.toggle("staff-shell", Boolean(isStaff));
