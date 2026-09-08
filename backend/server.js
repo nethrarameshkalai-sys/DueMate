@@ -2968,6 +2968,29 @@ const assignmentUpload = multer({
     }
 });
 
+const submissionUpload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedMimes = [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "text/plain",
+            "text/csv",
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp"
+        ];
+        cb(null, allowedMimes.includes(file.mimetype));
+    }
+});
+
 function requireRole(requiredRole) {
     return (req, res, next) => {
         db.query("SELECT role FROM users WHERE email = ? LIMIT 1", [req.user.email], (error, results) => {
@@ -3205,8 +3228,8 @@ app.get("/api/assignments/:id/file", verifyToken, (req, res) => {
         });
 });
 
-app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student"), assignmentUpload.single("file"), (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, message: "A PDF submission file is required." });
+app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student"), submissionUpload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).json({ success: false, message: "A supported assignment document or image is required." });
     const submissionId = crypto.randomBytes(12).toString("hex");
     db.query(`SELECT a.id, a.teacher_email, a.title FROM assignments a
         JOIN users student ON student.email = ? AND student.role = 'student'
@@ -3219,7 +3242,7 @@ app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student")
             (id, assignment_id, student_email, file_name, file_path, file_size, file_type, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'submitted')
             ON DUPLICATE KEY UPDATE file_name = VALUES(file_name), file_path = VALUES(file_path), file_size = VALUES(file_size), status = 'submitted', feedback = NULL, reviewed_at = NULL, submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, req.params.id, req.user.email, req.file.originalname, path.basename(req.file.path), req.file.size, "application/pdf"],
+            [submissionId, req.params.id, req.user.email, req.file.originalname, path.basename(req.file.path), req.file.size, req.file.mimetype],
             (error) => {
                 if (error) {
                     removeUploadedFile(req.file);

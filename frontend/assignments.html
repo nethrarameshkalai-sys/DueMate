@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DueMate - Assignments</title>
     <script src="config.js"></script>
-    <link rel="stylesheet" href="app-shell.css">
+    <link rel="stylesheet" href="app-shell.css?v=20260920">
     <style>
         :root { --ink:#202b38; --muted:#6d7885; --paper:#fffdf8; --line:#e8e1d5; --accent:#087f8c; --accent-dark:#075866; --ok:#198754; --warn:#b7791f; }
         * { box-sizing:border-box; }
@@ -99,6 +99,10 @@
 </head>
 <body>
     <div class="background"><div class="grid"></div><div class="glow glow-one"></div><div class="glow glow-two"></div><div class="glow glow-three"></div><div class="study-float book-one">📚</div><div class="study-float book-two">📖</div><div class="study-float pencil">✏️</div><div class="study-float calendar-float">📅</div></div>
+    <header class="topbar app-shell-staff-topbar">
+        <div class="left-top"><button class="menu-btn" type="button" aria-label="Open navigation">☰</button><div class="brand">Due<span>Mate</span></div></div>
+        <div class="top-actions"><button class="calendar-btn date-control" type="button" onclick="location.href='calendar.html'" aria-label="Open calendar">📅</button><button class="notification-btn" type="button" onclick="location.href='notifications.html'" aria-label="Open notifications">🔔<span class="notification-dot"></span></button><button class="theme-toggle" data-shell-theme-toggle="true" type="button" aria-label="Switch to dark theme" title="Switch to dark theme">🌙</button><button type="button" onclick="location.href='profile.html'" aria-label="Open profile">👤</button></div>
+    </header>
     <main class="page">
         <header class="top">
             <div><div class="eyebrow">Academic exchange</div><h1>Assignments</h1><p class="intro" id="roleIntro">Loading your assignment desk...</p></div>
@@ -120,7 +124,7 @@
             </aside>
         </div>
     </main>
-    <script src="app-shell.js?v=20260917"></script>
+    <script src="app-shell.js?v=20260918"></script>
     <script>
         const API = window.API_BASE || "http://localhost:5000";
         const headers = () => ({ Authorization: "Bearer " + sessionStorage.getItem("duemate-token") });
@@ -142,13 +146,13 @@
             }
             if (!response.ok) throw new Error(data.message || "Unable to load assignments.");
             currentRole = data.role; assignmentCache = data.assignments || []; teacherPanel.hidden = currentRole !== "teacher";
-            document.getElementById("roleIntro").textContent = currentRole === "teacher" ? "Publish work, open student submissions, and complete reviews." : "Read the brief, open the PDF, and submit your completed work.";
+            document.getElementById("roleIntro").textContent = currentRole === "teacher" ? "Publish work, open student submissions, and complete reviews." : "Read the brief, open the assignment, and submit your completed work.";
             document.getElementById("listTitle").textContent = currentRole === "teacher" ? "Published assignments" : "Available assignments";
             if (!data.assignments.length) { list.innerHTML = '<div class="empty">No assignments have been published yet.</div>'; return; }
             list.innerHTML = data.assignments.map(assignment => currentRole === "teacher" ? teacherCard(assignment) : studentCard(assignment)).join("");
             bindActions();
         }
-        function studentCard(a) { const state = a.assignment_status ? `<span class="status ${esc(a.assignment_status)}">${esc(a.assignment_status.replace("_", " "))}</span>` : ""; return `<article class="assignment"><h3>${esc(a.title)} ${state}</h3><div class="meta">${esc(a.subject || "General")} ${a.due_date ? "· Due " + esc(displayDate(a.due_date)) + (a.due_time ? " at " + esc(String(a.due_time).slice(0, 5)) : "") : ""}<br>${esc(a.description || "No instructions provided.")}</div><div class="actions"><button class="secondary pdf-btn" data-url="/api/assignments/${encodeURIComponent(a.id)}/file">View assignment PDF</button><label class="button" style="display:inline-block">Submit PDF<input class="submit-file" data-id="${esc(a.id)}" type="file" accept="application/pdf" hidden></label></div>${a.submission_feedback ? `<div class="review">Feedback: ${esc(a.submission_feedback)}</div>` : ""}</article>`; }
+        function studentCard(a) { const state = a.assignment_status ? `<span class="status ${esc(a.assignment_status)}">${esc(a.assignment_status.replace("_", " "))}</span>` : ""; return `<article class="assignment"><h3>${esc(a.title)} ${state}</h3><div class="meta">${esc(a.subject || "General")} ${a.due_date ? "· Due " + esc(displayDate(a.due_date)) + (a.due_time ? " at " + esc(String(a.due_time).slice(0, 5)) : "") : ""}<br>${esc(a.description || "No instructions provided.")}</div><div class="actions"><button class="secondary pdf-btn" data-url="/api/assignments/${encodeURIComponent(a.id)}/file">View assignment file</button><label class="button" style="display:inline-block">Submit file<input class="submit-file" data-id="${esc(a.id)}" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp" hidden></label></div>${a.submission_feedback ? `<div class="review">Feedback: ${esc(a.submission_feedback)}</div>` : ""}</article>`; }
         function teacherCard(a) { const state = a.assignment_status ? `<span class="status ${esc(a.assignment_status)}">${esc(a.assignment_status.replace("_", " "))}</span>` : ""; const deadline = a.due_date ? `Due ${esc(displayDate(a.due_date))}${a.due_time ? " at " + esc(String(a.due_time).slice(0, 5)) : ""}` : "No deadline"; return `<article class="assignment"><h3>${esc(a.subject || "General")} · ${esc(a.title)} ${state}</h3><div class="meta">${deadline} · Year ${esc(a.target_year)}<br>${esc(a.description || "No instructions provided.")}<br>File: ${esc(a.file_name || "Uploaded PDF")} · ${a.submission_count || 0} submission(s)</div><div class="actions"><button class="secondary pdf-btn" data-url="/api/assignments/${encodeURIComponent(a.id)}/file">Open PDF</button><button class="review-btn" data-id="${esc(a.id)}">Review submissions</button><button class="secondary edit-btn" data-id="${esc(a.id)}">Edit</button><button class="warn delete-btn" data-id="${esc(a.id)}">Delete</button></div><div id="reviews-${esc(a.id)}"></div></article>`; }
         function bindActions() { document.querySelectorAll(".submit-file").forEach(input => input.addEventListener("change", () => submitFile(input))); document.querySelectorAll(".review-btn").forEach(button => button.addEventListener("click", () => loadReviews(button.dataset.id))); document.querySelectorAll(".pdf-btn").forEach(button => button.addEventListener("click", () => openPdf(button.dataset.url))); document.querySelectorAll(".delete-btn").forEach(button => button.addEventListener("click", () => deleteAssignment(button.dataset.id))); document.querySelectorAll(".edit-btn").forEach(button => button.addEventListener("click", () => editAssignment(button.dataset.id))); }
         async function deleteAssignment(id) { if (!confirm("Delete this assignment?")) return; const response = await fetch(API + "/api/assignments/" + encodeURIComponent(id), { method:"DELETE", headers:headers() }); const data = await response.json(); if (!response.ok) alert(data.message || "Delete failed."); else loadAssignments(); }

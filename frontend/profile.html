@@ -582,14 +582,6 @@
             position: relative;
         }
 
-        .topbar .calendar-date-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-            font-size: 11px;
-            font-weight: 800;
-        }
 
         .topbar .notification-btn {
             position: relative;
@@ -2431,11 +2423,10 @@
         }
 
     </style>
-    <link rel="stylesheet" href="app-shell.css">
+    <link rel="stylesheet" href="app-shell.css?v=20260920">
 
     <style>
-        .registration-mobile-row,
-        .edit-mobile-group {
+        .registration-mobile-row {
             display: none;
         }
     </style>
@@ -2443,7 +2434,7 @@
 
 
 <body>
-    <script src="app-shell.js?v=20260917"></script>
+    <script src="app-shell.js?v=20260918"></script>
 
 
     <!-- =========================================================
@@ -2541,9 +2532,6 @@
                     >
                         📅
 
-                        <span class="calendar-date-label" id="profileCurrentDate">
-                            Today
-                        </span>
                     </button>
 
                     <button
@@ -3153,7 +3141,7 @@
 
             <!-- FULL NAME -->
 
-            <div class="edit-group edit-mobile-group">
+            <div class="edit-group">
 
                 <label
                     class="edit-label"
@@ -3168,28 +3156,6 @@
                     id="editName"
                     type="text"
                     placeholder="Enter your full name"
-                >
-
-            </div>
-
-
-            <!-- MOBILE -->
-
-            <div class="edit-group">
-
-                <label
-                    class="edit-label"
-                    for="editMobile"
-                >
-                    Mobile Number
-                </label>
-
-
-                <input
-                    class="edit-input"
-                    id="editMobile"
-                    type="tel"
-                    placeholder="Enter your mobile number"
                 >
 
             </div>
@@ -3468,12 +3434,6 @@
         const editName =
             document.getElementById(
                 "editName"
-            );
-
-
-        const editMobile =
-            document.getElementById(
-                "editMobile"
             );
 
 
@@ -3821,9 +3781,8 @@
             }
 
             editName.value = data.name === "Not available" ? "" : data.name;
-            editMobile.value = data.mobile === "Not available" ? "" : data.mobile;
             editCollege.value = data.college === "Not available" ? "" : data.college;
-            editDepartment.value = data.department === "Information Technology" ? "" : data.department;
+            editDepartment.value = data.department === "Not available" ? "" : data.department;
             editSemester.value = data.year === "Not available" || !["1", "2", "3", "4"].includes(String(data.year).trim()) ? "" : String(data.year).trim();
 
             modalOverlay.classList.add("show");
@@ -3868,16 +3827,9 @@
                 return;
             }
 
-            const mobileValue = editMobile.value.trim();
             const collegeValue = editCollege.value.trim();
             const departmentValue = editDepartment.value.trim();
             const yearValue = editSemester.value.trim();
-
-            if (mobileValue && !/^\d{10}$/.test(mobileValue)) {
-                showToast("Please enter a valid 10-digit mobile number.");
-                editMobile.focus();
-                return;
-            }
 
             if (yearValue && !["1", "2", "3", "4"].includes(yearValue)) {
                 showToast("Please select a valid year.");
@@ -3893,7 +3845,6 @@
                     method: "PUT",
                     body: JSON.stringify({
                         name: newName,
-                        mobile: mobileValue,
                         college: collegeValue,
                         department: departmentValue,
                         year: yearValue
@@ -3922,8 +3873,6 @@
                     userEmail: userEmail,
                     name: newName,
                     fullName: newName,
-                    mobile: mobileValue,
-                    mobileNumber: mobileValue,
                     college: collegeValue,
                     collegeName: collegeValue,
                     department: departmentValue || user.department || "Information Technology",
@@ -4147,8 +4096,7 @@
     try {
         const profileUser = JSON.parse(sessionStorage.getItem("duemate-user") || "null");
         const mobileDisplay = document.getElementById("mobileNumber");
-        const mobileEdit = document.getElementById("editMobile");
-        [mobileDisplay, mobileEdit].forEach(function (field) {
+        [mobileDisplay].forEach(function (field) {
             if (field) {
                 const container = field.closest(".form-group, .profile-info-item, .info-item");
                 if (container) container.style.display = "none";

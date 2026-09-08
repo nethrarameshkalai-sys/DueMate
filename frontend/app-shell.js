@@ -55,6 +55,18 @@
         });
     }
 
+    function ensureTopbarThemeButton() {
+        document.querySelectorAll(".topbar").forEach(function (topbar) {
+            const actions = topbar.querySelector(".top-actions");
+            if (!actions || actions.querySelector("[data-shell-theme-toggle], [onclick*='toggleTheme']")) return;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.shellThemeToggle = "true";
+            button.addEventListener("click", toggleTheme);
+            actions.appendChild(button);
+        });
+    }
+
     function toggleTheme() {
         const user = email();
         const key = user ? "duemate-theme-" + encodeURIComponent(user) : "duemate-theme";
@@ -65,6 +77,22 @@
     }
 
     window.toggleTheme = toggleTheme;
+
+    function updateGuestThemeIcon() {
+        const icon = document.body.classList.contains("dark") ? "☀️" : "🌙";
+        document.querySelectorAll(".guest-theme-toggle").forEach(function (button) {
+            button.textContent = icon;
+            button.setAttribute("aria-label", document.body.classList.contains("dark") ? "Switch to light theme" : "Switch to dark theme");
+            button.title = button.getAttribute("aria-label");
+        });
+    }
+
+    window.toggleGuestTheme = function () {
+        const next = document.body.classList.contains("dark") ? "light" : "dark";
+        localStorage.setItem("duemate-theme", next);
+        applyTheme();
+        updateGuestThemeIcon();
+    };
 
     function ensureStaffTopbar() {
         if (!isStaff || useMasterShell) return;
@@ -94,12 +122,14 @@
             actions.appendChild(themeButton);
         }
         const existingDateButton = topbar.querySelector(".calendar-btn");
-        if (existingDateButton) existingDateButton.dataset.shellDate = "true";
+        if (existingDateButton && pageName === "dashboard.html") existingDateButton.dataset.shellDate = "true";
         if (!topbar.querySelector("[data-shell-date]")) {
             const dateButton = document.createElement("button");
             dateButton.type = "button";
             dateButton.dataset.shellDate = "true";
-            dateButton.innerHTML = "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" }) + "</span>";
+            dateButton.innerHTML = pageName === "dashboard.html"
+                ? "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" }) + "</span>"
+                : "📅";
             dateButton.addEventListener("click", () => { location.href = "calendar.html"; });
             actions.insertBefore(dateButton, actions.firstChild);
         }
@@ -285,8 +315,11 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         document.body.classList.toggle("staff-shell", Boolean(isStaff));
+        document.body.classList.toggle("dashboard-shell-page", pageName === "dashboard.html");
         ensureStaffTopbar();
+        ensureTopbarThemeButton();
         applyTheme();
+        updateGuestThemeIcon();
         ensureBackground();
         normalizeNativeDrawer();
         updateNotificationBadge();

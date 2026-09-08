@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications - DueMate</title>
-    <link rel="stylesheet" href="app-shell.css?v=20260916">
+    <link rel="stylesheet" href="app-shell.css?v=20260920">
      <style>
           /* =====================================================
               DUE MATE - NOTIFICATIONS
@@ -634,14 +634,6 @@
             font-size: 18px;
         }
 
-        .topbar .calendar-date-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-            font-size: 11px;
-            font-weight: 800;
-        }
 
         .topbar .notification-btn {
             position: relative;
@@ -1673,12 +1665,12 @@
         }
 
     </style>
-    <link rel="stylesheet" href="app-shell.css">
+    <link rel="stylesheet" href="app-shell.css?v=20260920">
 </head>
 
 
 <body>
-    <script src="app-shell.js?v=20260917"></script>
+    <script src="app-shell.js?v=20260918"></script>
 
 
     <!-- =====================================================
@@ -1784,9 +1776,6 @@
 
                 📅
 
-                <strong id="currentDate">
-                    Today
-                </strong>
 
             </button>
 
@@ -2112,32 +2101,6 @@
         let notifications = [];
 
         let currentFilter = "all";
-
-
-        /* =====================================================
-           DATE
-        ===================================================== */
-
-        function updateCurrentDate() {
-
-            const dateElement =
-                document.getElementById(
-                    "currentDate"
-                );
-
-            const today =
-                new Date();
-
-            dateElement.textContent =
-                today.toLocaleDateString(
-                    undefined,
-                    {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                    }
-                );
-        }
 
 
         /* =====================================================
@@ -2966,8 +2929,6 @@
         /* =====================================================
            INITIALIZE
         ===================================================== */
-
-        updateCurrentDate();
 
         loadNotificationSetting();
 
