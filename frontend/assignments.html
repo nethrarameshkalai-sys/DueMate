@@ -110,12 +110,12 @@
         <div class="layout">
             <section class="panel"><h2 id="listTitle">Current assignments</h2><div id="assignmentList" class="empty">Loading assignments...</div></section>
             <aside class="panel" id="teacherPanel" hidden>
-                <h2>Publish a PDF</h2>
+                <h2>Publish an assignment document</h2>
                 <form id="assignmentForm">
                     <label for="subject">Subject</label><input id="subject" required maxlength="255">
                     <label for="title">Assignment title</label><input id="title" required maxlength="255">
                     <label for="description">Instructions</label><textarea id="description" required></textarea>
-                    <label for="assignmentFile">Assignment PDF</label><input id="assignmentFile" type="file" accept="application/pdf" required>
+                    <label for="assignmentFile">Assignment document</label><input id="assignmentFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp" required>
                     <label for="targetYear">Target year</label><select id="targetYear" required><option value="">Select year</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option></select>
                     <label for="dueDate">Due date</label><input id="dueDate" type="date" required>
                     <label for="dueTime">Due time</label><input id="dueTime" type="time" required>

@@ -2964,7 +2964,22 @@ const assignmentUpload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        cb(null, file.mimetype === "application/pdf");
+        const allowedMimes = [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "text/plain",
+            "text/csv",
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp"
+        ];
+        cb(null, allowedMimes.includes(file.mimetype));
     }
 });
 
@@ -3008,7 +3023,7 @@ function removeUploadedFile(file) {
 
 // Assignment workflow: teachers publish PDFs, students submit PDFs, teachers review them.
 app.post("/api/assignments", verifyToken, requireRole("teacher"), assignmentUpload.single("file"), (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, message: "A PDF assignment file is required." });
+    if (!req.file) return res.status(400).json({ success: false, message: "A supported assignment document or image is required." });
     const title = String(req.body.title || "").trim();
     const subject = String(req.body.subject || "").trim();
     const description = String(req.body.description || "").trim();
@@ -3043,7 +3058,7 @@ app.post("/api/assignments", verifyToken, requireRole("teacher"), assignmentUplo
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [assignment.id, assignment.teacherEmail, assignment.title, assignment.subject, assignment.description,
             assignment.dueDate, dueTime, targetYear,
-            assignment.college, assignment.department, assignment.fileName, assignment.filePath, assignment.fileSize, "application/pdf"],
+            assignment.college, assignment.department, assignment.fileName, assignment.filePath, assignment.fileSize, req.file.mimetype],
         (error) => {
             if (error) {
                 removeUploadedFile(req.file);
