@@ -88,10 +88,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 
-<link rel="stylesheet" href="app-shell.css?v=20260920">
+<link rel="stylesheet" href="app-shell.css?v=20260921">
 </head>
 <body>
-    <script src="app-shell.js?v=20260918"></script>
+    <script src="app-shell.js?v=20260921"></script>
 <div class="background">
 <div class="grid"></div><div class="glow glow-one"></div><div class="glow glow-two"></div><div class="glow glow-three"></div>
 <div class="study-float book-one">📚</div><div class="study-float book-two">📖</div><div class="study-float pencil">✏️</div><div class="study-float calendar-float">📅</div>
@@ -106,7 +106,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 <div class="brand">Due<span>Mate</span></div>
 </div>
 <div class="top-actions">
-<button class="calendar-btn" type="button" onclick="goCalendar()" aria-label="Calendar">📅</button>
+<button class="calendar-btn date-control" type="button" onclick="goCalendar()" aria-label="Open calendar">📅 <span class="calendar-date-label" id="dashboardCurrentDate">Today</span></button>
 <button class="notification-btn" type="button" onclick="goNotifications()" aria-label="Notifications">🔔<span class="notification-dot"></span></button>
 </div>
 </header>
@@ -723,7 +723,7 @@ function deleteEvent(id){
 
     if(event.source==="backend"){
         alert(
-            "This event comes from your Tasks page. Please delete or edit it from the Tasks page."
+            "This event comes from your assignments. Please delete or edit it from the Assignments page."
         );
         return;
     }

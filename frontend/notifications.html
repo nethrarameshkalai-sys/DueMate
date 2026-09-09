@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications - DueMate</title>
-    <link rel="stylesheet" href="app-shell.css?v=20260920">
+    <link rel="stylesheet" href="app-shell.css?v=20260921">
      <style>
           /* =====================================================
               DUE MATE - NOTIFICATIONS
@@ -1665,12 +1665,12 @@
         }
 
     </style>
-    <link rel="stylesheet" href="app-shell.css?v=20260920">
+    <link rel="stylesheet" href="app-shell.css?v=20260921">
 </head>
 
 
 <body>
-    <script src="app-shell.js?v=20260918"></script>
+    <script src="app-shell.js?v=20260921"></script>
 
 
     <!-- =====================================================
@@ -1770,12 +1770,12 @@
 
             <div class="top-actions">
             <button
-                class="calendar-btn"
+                class="calendar-btn date-control"
                 type="button"
-                onclick="goCalendar()">
+                onclick="goCalendar()"
+                aria-label="Open calendar">
 
-                📅
-
+                📅 <span class="calendar-date-label" id="dashboardCurrentDate">Today</span>
 
             </button>
 
@@ -2101,6 +2101,64 @@
         let notifications = [];
 
         let currentFilter = "all";
+
+        const API = window.API_BASE || window.API_BASE_URL || "http://localhost:5000";
+
+        function getAuthHeaders() {
+            const token = sessionStorage.getItem("duemate-token");
+            return {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: "Bearer " + token } : {})
+            };
+        }
+
+        function normalizeNotification(row) {
+            const type = String(row.type || "").toLowerCase();
+            const category = type.includes("assignment") || type.includes("deadline")
+                ? "tasks"
+                : type.includes("verification") || type.includes("submission") || type.includes("correction")
+                    ? "tasks"
+                    : type.includes("group")
+                        ? "groups"
+                        : type.includes("timetable")
+                            ? "timetable"
+                            : type.includes("challenge")
+                                ? "challenges"
+                                : "tasks";
+
+            return {
+                id: row.id,
+                title: row.title || "Notification",
+                message: row.message || "",
+                category,
+                icon: getIconClass(category),
+                read: Number(row.read_status) === 1,
+                time: row.created_at ? new Date(row.created_at).toLocaleString() : "",
+                type: row.type || "task"
+            };
+        }
+
+        async function loadNotificationsFromApi() {
+            try {
+                const response = await fetch(API + "/api/notifications", {
+                    method: "GET",
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error("Unable to load notifications");
+                }
+
+                const data = await response.json();
+                const rows = Array.isArray(data.notifications) ? data.notifications : [];
+                notifications = rows.map(normalizeNotification);
+                renderNotifications();
+            } catch (error) {
+                console.warn(error);
+                notifications = [];
+                renderNotifications();
+            }
+        }
 
 
         /* =====================================================
@@ -2539,10 +2597,8 @@
                 ).length;
 
 
-            document.getElementById(
-                "unreadCount"
-            ).textContent =
-                unread;
+            const unreadCount = document.getElementById("unreadCount");
+            if (unreadCount) unreadCount.textContent = unread;
 
 
             const dot =
@@ -2551,11 +2607,11 @@
                 );
 
             const shouldShow = unread > 0;
-            dot.style.display = shouldShow ? "block" : "none";
+            if (dot) dot.style.display = shouldShow ? "block" : "none";
             localStorage.setItem("duemate-notification-badge", shouldShow ? "show" : "hide");
 
             document.querySelectorAll(".notification-btn .notification-dot").forEach(function (badge) {
-                badge.style.display = shouldShow ? "block" : "none";
+                if (badge) badge.style.display = shouldShow ? "block" : "none";
             });
         }
 
@@ -2934,7 +2990,7 @@
 
         loadSoundSetting();
 
-        renderNotifications();
+        loadNotificationsFromApi();
 
     </script>
 </body>

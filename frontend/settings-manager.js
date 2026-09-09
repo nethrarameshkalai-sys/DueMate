@@ -136,11 +136,11 @@ class DueMateSettings {
             const email = this.userEmail;
             const payload = { [key]: value };
             
-            const response = await fetch(`/api/users/${email}/settings`, {
+            const response = await fetch((window.API_BASE || "http://localhost:5000") + "/api/settings", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${sessionStorage.getItem("jwtToken") || ""}`
+                    "Authorization": `Bearer ${sessionStorage.getItem("duemate-token") || ""}`
                 },
                 body: JSON.stringify(payload)
             });

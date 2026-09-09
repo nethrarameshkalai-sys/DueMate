@@ -86,22 +86,47 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // ============================================================
 
 // Function to create a notification
-function createNotification(userEmail, type, title, message, relatedId = null, relatedType = null) {
+function createNotification(userEmail, type, title, message, relatedId = null, relatedType = null, done = null) {
     const notificationId = crypto.randomBytes(8).toString("hex");
-    const sql = `
-        INSERT INTO notifications (id, user_email, type, title, message, related_id, related_type, read_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    const lookupSql = `
+        SELECT id
+        FROM notifications
+        WHERE user_email = ?
+          AND type = ?
+          AND title = ?
+          AND message = ?
+          AND related_id <=> ?
+          AND related_type <=> ?
+        LIMIT 1
     `;
-    
-    db.query(
-        sql,
-        [notificationId, userEmail, type, title, message, relatedId, relatedType],
-        (error) => {
-            if (error) {
-                console.error("Create notification error:", error.message);
-            }
+
+    db.query(lookupSql, [userEmail, type, title, message, relatedId, relatedType], (lookupError, existingRows) => {
+        if (lookupError) {
+            console.error("Notification duplicate check error:", lookupError.message);
+            if (done) done();
+            return;
         }
-    );
+        if (existingRows && existingRows.length > 0) {
+            if (done) done();
+            return;
+        }
+
+        const sql = `
+            INSERT INTO notifications (id, user_email, type, title, message, related_id, related_type, read_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        `;
+
+        db.query(
+            sql,
+            [notificationId, userEmail, type, title, message, relatedId, relatedType],
+            (error) => {
+                if (error) {
+                    console.error("Create notification error:", error.message);
+                }
+                if (done) done();
+            }
+        );
+    });
 }
 
 // Function to check task reminders and create notifications
@@ -179,8 +204,120 @@ function checkTaskReminders() {
     });
 }
 
+function checkAssignmentReminders(done = null) {
+    const today = new Date();
+    const tzOffset = today.getTimezoneOffset() * 60 * 1000;
+    const todayForComparison = new Date(today.getTime() - tzOffset);
+    const todayIso = todayForComparison.toISOString().split('T')[0];
+    const tomorrowIso = new Date(todayForComparison.getTime() + 86400000).toISOString().split('T')[0];
+    const threeDaysIso = new Date(todayForComparison.getTime() + 3 * 86400000).toISOString().split('T')[0];
+
+    const assignmentSql = `
+        SELECT a.id, a.title, DATE_FORMAT(a.due_date, '%Y-%m-%d') AS due_date_iso,
+            a.college, a.department, a.target_year
+        FROM assignments a
+        WHERE a.due_date IS NOT NULL
+        ORDER BY a.due_date ASC
+    `;
+
+    db.query(assignmentSql, (error, assignments) => {
+        if (error) {
+            console.error("Assignment reminder scan error:", error.message);
+            if (done) done();
+            return;
+        }
+
+        if (!assignments || assignments.length === 0) {
+            if (done) done();
+            return;
+        }
+
+        let pendingAssignments = assignments.length;
+        const finishAssignment = () => {
+            pendingAssignments -= 1;
+            if (pendingAssignments === 0 && done) done();
+        };
+
+        assignments.forEach((assignment) => {
+            const studentSql = `
+                SELECT u.email
+                FROM users u
+                LEFT JOIN assignment_submissions s
+                    ON s.assignment_id = ? AND s.student_email = u.email
+                WHERE u.role = 'student'
+                  AND u.college = ?
+                  AND u.department = ?
+                  AND u.year = ?
+                  AND s.id IS NULL
+            `;
+
+            db.query(studentSql, [assignment.id, assignment.college, assignment.department, assignment.target_year], (studentError, students) => {
+                if (studentError) {
+                    console.error("Assignment reminder recipient lookup error:", studentError.message);
+                    finishAssignment();
+                    return;
+                }
+
+                if (!students || students.length === 0) {
+                    finishAssignment();
+                    return;
+                }
+
+                const dueDate = new Date(assignment.due_date_iso + "T00:00:00Z");
+                const diffDays = Math.round((dueDate - new Date(todayIso + "T00:00:00Z")) / 86400000);
+                let type = null;
+                let title = null;
+                let message = null;
+
+                if (diffDays < 0) {
+                    type = "assignment_overdue";
+                    title = "Assignment Overdue";
+                    message = `Assignment "${assignment.title}" is overdue.`;
+                } else if (diffDays === 0) {
+                    type = "assignment_due_today";
+                    title = "Assignment Due Today";
+                    message = `Assignment "${assignment.title}" is due today.`;
+                } else if (diffDays === 1) {
+                    type = "assignment_due_tomorrow";
+                    title = "Assignment Due Tomorrow";
+                    message = `Assignment "${assignment.title}" is due tomorrow.`;
+                } else if (diffDays >= 2 && diffDays <= 3) {
+                    type = "assignment_due_soon";
+                    title = "Assignment Due Soon";
+                    message = `Assignment "${assignment.title}" is due in ${diffDays} days.`;
+                }
+
+                if (!type || !title || !message) {
+                    finishAssignment();
+                    return;
+                }
+
+                let pendingNotifications = students.length;
+                students.forEach((student) => {
+                    createNotification(
+                        student.email,
+                        type,
+                        title,
+                        message,
+                        assignment.id,
+                        "assignment",
+                        () => {
+                            pendingNotifications -= 1;
+                            if (pendingNotifications === 0) finishAssignment();
+                        }
+                    );
+                });
+            });
+        });
+    });
+}
+
 // Run task reminder check every hour
 setInterval(checkTaskReminders, 3600000);
+setInterval(checkAssignmentReminders, 3600000);
+
+checkTaskReminders();
+checkAssignmentReminders();
 
 // ============================================================
 // BASIC ERROR HANDLER FOR INVALID JSON
@@ -2272,26 +2409,28 @@ app.delete("/api/tasks/:id", verifyToken, (req, res) => {
 app.get("/api/notifications", verifyToken, (req, res) => {
     const userEmail = req.user.email;
 
-    const sql = `
-        SELECT id, type, title, message, related_id, related_type, read_status, created_at
-        FROM notifications
-        WHERE user_email = ?
-        ORDER BY created_at DESC
-        LIMIT 50
-    `;
+    checkAssignmentReminders(() => {
+        const sql = `
+            SELECT id, type, title, message, related_id, related_type, read_status, created_at
+            FROM notifications
+            WHERE user_email = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        `;
 
-    db.query(sql, [userEmail], (error, results) => {
-        if (error) {
-            console.error("Get notifications error:", error.message);
-            return res.status(500).json({
-                success: false,
-                message: "Unable to fetch notifications."
+        db.query(sql, [userEmail], (error, results) => {
+            if (error) {
+                console.error("Get notifications error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to fetch notifications."
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                notifications: results || []
             });
-        }
-
-        return res.status(200).json({
-            success: true,
-            notifications: results || []
         });
     });
 });
@@ -3079,7 +3218,7 @@ app.get("/api/assignments", verifyToken, (req, res) => {
         const isTeacher = roleResults[0].role === "teacher";
         const sql = isTeacher
             ? `SELECT a.*, COUNT(s.id) AS submission_count,
-                CASE WHEN COUNT(s.id) = 0 AND a.due_date < CURRENT_DATE THEN 'overdue'
+                CASE WHEN COUNT(s.id) = 0 AND CONCAT(a.due_date, ' ', COALESCE(a.due_time, '23:59:59')) < CURRENT_TIMESTAMP THEN 'overdue'
                 WHEN COUNT(s.id) = 0 THEN 'pending'
                 WHEN SUM(s.status IN ('verified', 'completed')) = COUNT(s.id) THEN 'completed'
                 ELSE 'submitted' END AS assignment_status
@@ -3093,7 +3232,7 @@ app.get("/api/assignments", verifyToken, (req, res) => {
                 WHEN s.status IN ('verified', 'completed') THEN s.status
                 WHEN s.viewed_at IS NOT NULL THEN 'viewed'
                 WHEN s.id IS NOT NULL THEN 'submitted'
-                WHEN a.due_date < CURRENT_DATE THEN 'overdue'
+                WHEN CONCAT(a.due_date, ' ', COALESCE(a.due_time, '23:59:59')) < CURRENT_TIMESTAMP THEN 'overdue'
                 ELSE 'pending' END AS assignment_status
                 FROM assignments a JOIN users u ON u.email = ?
                 LEFT JOIN users staff_teacher ON staff_teacher.email = a.teacher_email AND staff_teacher.role = 'teacher'
@@ -3175,10 +3314,15 @@ app.get("/api/staff/verifications", verifyToken, staffOnly, (req, res) => {
 
 app.patch("/api/staff/verifications/:id", verifyToken, staffOnly, (req, res) => {
     const status = String(req.body.status || "").trim().toLowerCase();
-    if (!["verified", "completed", "needs_correction"].includes(status)) return res.status(400).json({ success: false, message: "Invalid verification status." });
-    db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
-        SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
-        WHERE s.id = ? AND a.teacher_email = ?`, [status, String(req.body.feedback || "").trim() || null, req.params.id, req.user.email], (error, result) => {
+    if (!["verified", "needs_correction"].includes(status)) return res.status(400).json({ success: false, message: "Only verified or needs_correction is allowed." });
+    db.query(`SELECT s.status FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        WHERE s.id = ? AND a.teacher_email = ? LIMIT 1`, [req.params.id, req.user.email], (lookupError, currentRows) => {
+        if (lookupError) return res.status(500).json({ success: false, message: "Unable to load submission status." });
+        if (!currentRows.length) return res.status(404).json({ success: false, message: "Submission not found." });
+        if (!["submitted", "resubmitted"].includes(currentRows[0].status)) return res.status(409).json({ success: false, message: "This submission is not awaiting verification." });
+        db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+            SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
+            WHERE s.id = ? AND a.teacher_email = ?`, [status, String(req.body.feedback || "").trim() || null, req.params.id, req.user.email], (error, result) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to update verification." });
         if (!result.affectedRows) return res.status(404).json({ success: false, message: "Submission not found." });
         db.query(`SELECT s.student_email, a.title FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id WHERE s.id = ? LIMIT 1`, [req.params.id], (lookupError, rows) => {
@@ -3187,6 +3331,7 @@ app.patch("/api/staff/verifications/:id", verifyToken, staffOnly, (req, res) => 
                 createNotification(rows[0].student_email, status === "needs_correction" ? "correction_required" : "verification", "Assignment update", message, req.params.id, "submission");
             }
             res.json({ success: true, message: "Verification updated." });
+        });
         });
     });
 });
@@ -3246,18 +3391,29 @@ app.get("/api/assignments/:id/file", verifyToken, (req, res) => {
 app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student"), submissionUpload.single("file"), (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: "A supported assignment document or image is required." });
     const submissionId = crypto.randomBytes(12).toString("hex");
-    db.query(`SELECT a.id, a.teacher_email, a.title FROM assignments a
+    db.query(`SELECT a.id, a.teacher_email, a.title, s.status AS existing_status FROM assignments a
         JOIN users student ON student.email = ? AND student.role = 'student'
+        LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_email = student.email
         WHERE a.id = ? AND a.college = student.college AND a.department = student.department AND a.target_year = student.year LIMIT 1`, [req.user.email, req.params.id], (checkError, assignments) => {
         if (checkError || assignments.length === 0) {
             removeUploadedFile(req.file);
             return res.status(404).json({ success: false, message: "Assignment not found." });
         }
+        const existingStatus = assignments[0].existing_status;
+        if (["submitted", "resubmitted"].includes(existingStatus)) {
+            removeUploadedFile(req.file);
+            return res.status(409).json({ success: false, message: "This submission is already under verification." });
+        }
+        if (existingStatus === "verified") {
+            removeUploadedFile(req.file);
+            return res.status(409).json({ success: false, message: "This submission has already been accepted." });
+        }
+        const nextStatus = existingStatus === "needs_correction" ? "resubmitted" : "submitted";
         db.query(`INSERT INTO assignment_submissions
             (id, assignment_id, student_email, file_name, file_path, file_size, file_type, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'submitted')
-            ON DUPLICATE KEY UPDATE file_name = VALUES(file_name), file_path = VALUES(file_path), file_size = VALUES(file_size), status = 'submitted', feedback = NULL, reviewed_at = NULL, submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, req.params.id, req.user.email, req.file.originalname, path.basename(req.file.path), req.file.size, req.file.mimetype],
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE file_name = VALUES(file_name), file_path = VALUES(file_path), file_size = VALUES(file_size), status = VALUES(status), feedback = NULL, reviewed_at = NULL, submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, req.params.id, req.user.email, req.file.originalname, path.basename(req.file.path), req.file.size, req.file.mimetype, nextStatus],
             (error) => {
                 if (error) {
                     removeUploadedFile(req.file);
@@ -3266,12 +3422,12 @@ app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student")
                 createNotification(
                     assignments[0].teacher_email,
                     "assignment_submission",
-                    "Assignment submitted",
-                    `${req.user.email} submitted ${assignments[0].title} for verification.`,
+                    nextStatus === "resubmitted" ? "Corrected submission received" : "Assignment submitted",
+                    `${req.user.email} ${nextStatus === "resubmitted" ? "resubmitted" : "submitted"} ${assignments[0].title} for verification.`,
                     req.params.id,
                     "assignment"
                 );
-                res.status(201).json({ success: true, message: "Assignment submitted for review." });
+                res.status(201).json({ success: true, status: nextStatus, message: nextStatus === "resubmitted" ? "Corrected answer submitted for review." : "Assignment submitted for review." });
             });
     });
 });
@@ -3297,17 +3453,25 @@ app.get("/api/assignments/submissions/:id/file", verifyToken, (req, res) => {
 
 app.patch("/api/assignments/:assignmentId/submissions/:submissionId", verifyToken, requireRole("teacher"), (req, res) => {
     const status = String(req.body.status || "").trim().toLowerCase();
-    if (!["submitted", "reviewed", "completed", "needs_revision"].includes(status)) {
-        return res.status(400).json({ success: false, message: "Invalid submission status." });
+    if (!["verified", "needs_correction"].includes(status)) {
+        return res.status(400).json({ success: false, message: "Only verified or needs_correction is allowed." });
     }
-    db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+    db.query(`SELECT s.status FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
         JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
-        SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
-        WHERE s.id = ? AND s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`,
-        [req.user.email, status, String(req.body.feedback || "").trim() || null, req.params.submissionId, req.params.assignmentId, req.user.email], (error, result) => {
+        WHERE s.id = ? AND s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department LIMIT 1`,
+        [req.user.email, req.params.submissionId, req.params.assignmentId, req.user.email], (lookupError, currentRows) => {
+        if (lookupError) return res.status(500).json({ success: false, message: "Unable to load submission status." });
+        if (!currentRows.length) return res.status(404).json({ success: false, message: "Submission not found." });
+        if (!["submitted", "resubmitted"].includes(currentRows[0].status)) return res.status(409).json({ success: false, message: "This submission is not awaiting verification." });
+        db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+            JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+            SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
+            WHERE s.id = ? AND s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`,
+            [req.user.email, status, String(req.body.feedback || "").trim() || null, req.params.submissionId, req.params.assignmentId, req.user.email], (error, result) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to update review status." });
         if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Submission not found." });
         res.json({ success: true, message: "Submission review updated." });
+        });
     });
 });
 

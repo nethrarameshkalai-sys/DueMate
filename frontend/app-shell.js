@@ -4,6 +4,12 @@
     const isStaff = sessionUser && sessionUser.role === "teacher";
     const pageName = location.pathname.split("/").pop() || "dashboard.html";
     const useMasterShell = false;
+    if (["staff-students.html", "staff-verification.html"].includes(pageName) && !document.getElementById("date")) {
+        const verificationDate = document.createElement("span");
+        verificationDate.id = "date";
+        verificationDate.hidden = true;
+        document.body.appendChild(verificationDate);
+    }
     const removedPages = ["groups.html", "subjects.html", "settings.html"];
     if (removedPages.includes(pageName)) {
         location.replace("dashboard.html");
@@ -16,8 +22,9 @@
         ["staff-verification.html", "Verification", "✅"],
         ["notifications.html", "Notifications", "🔔"]
     ] : [
-        ["dashboard.html", "Dashboard", "🏠"], ["calendar.html", "Calendar", "📅"],
-        ["assignments.html", "Assignments", "📄"], ["notifications.html", "Notifications", "🔔"]
+        ["dashboard.html", "Dashboard", "🏠"],
+        ["assignments.html", "Assignments", "📄"],
+        ["notifications.html", "Notifications", "🔔"]
     ];
     const accountPages = [["profile.html", "Profile", "👤"]];
 
@@ -64,6 +71,87 @@
             button.dataset.shellThemeToggle = "true";
             button.addEventListener("click", toggleTheme);
             actions.appendChild(button);
+        });
+    }
+
+    function normalizeVerificationStatusLabels() {
+        if (pageName !== "staff-verification.html") return;
+        const labels = {
+            submitted: "Submitted • Under Verification",
+            resubmitted: "Resubmitted • Under Verification",
+            verified: "Verified • Accepted",
+            completed: "Verified • Accepted",
+            needs_correction: "Correction Required",
+            needs_revision: "Correction Required"
+        };
+        document.querySelectorAll(".item .status").forEach(function (badge) {
+            badge.textContent = labels[badge.textContent.trim().replaceAll(" ", "_")] || labels[badge.textContent.trim()] || badge.textContent;
+        });
+        document.querySelectorAll(".item button").forEach(function (button) {
+            if (button.textContent.trim() === "Verified") button.textContent = "Accept / Verify";
+        });
+    }
+
+    if (pageName === "staff-verification.html") {
+        new MutationObserver(normalizeVerificationStatusLabels).observe(document.body, { childList: true, subtree: true });
+    }
+
+    function ensureCommonTopbarControls() {
+        document.querySelectorAll(".topbar").forEach(function (topbar) {
+            const actions = topbar.querySelector(".top-actions");
+            if (!actions) return;
+
+            actions.querySelectorAll("button[aria-label='Profile'], button[aria-label='Open profile'], button[onclick*='profile.html'], button[onclick*='openProfile'], button[data-shell-profile]").forEach(function (button) {
+                button.remove();
+            });
+
+            let calendarButton = actions.querySelector(".calendar-btn, [data-shell-date]");
+            if (!calendarButton) {
+                calendarButton = document.createElement("button");
+                calendarButton.type = "button";
+                calendarButton.className = "calendar-btn date-control";
+                actions.insertBefore(calendarButton, actions.firstChild);
+            }
+            calendarButton.className = "calendar-btn date-control";
+            calendarButton.type = "button";
+            calendarButton.dataset.shellDate = "true";
+            calendarButton.setAttribute("aria-label", "Open calendar");
+            calendarButton.setAttribute("title", "Open calendar");
+            calendarButton.innerHTML = "📅 <span class='calendar-date-label' id='dashboardCurrentDate'>" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" }) + "</span>";
+            calendarButton.onclick = function () { location.href = "calendar.html"; };
+
+            let notificationButton = actions.querySelector(".notification-btn");
+            if (!notificationButton) {
+                notificationButton = document.createElement("button");
+                notificationButton.type = "button";
+                notificationButton.className = "notification-btn";
+                notificationButton.setAttribute("aria-label", "Open notifications");
+                actions.appendChild(notificationButton);
+            }
+            notificationButton.type = "button";
+            notificationButton.className = "notification-btn";
+            notificationButton.setAttribute("aria-label", "Open notifications");
+            notificationButton.title = "Notifications";
+            notificationButton.innerHTML = "🔔" + (notificationButton.querySelector(".notification-dot") ? "" : "<span class=\"notification-dot\"></span>");
+            notificationButton.onclick = function () { location.href = "notifications.html"; };
+
+            let themeButton = actions.querySelector("[data-shell-theme-toggle]");
+            if (!themeButton) {
+                themeButton = document.createElement("button");
+                themeButton.type = "button";
+                themeButton.dataset.shellThemeToggle = "true";
+                actions.appendChild(themeButton);
+            }
+            themeButton.type = "button";
+            themeButton.dataset.shellThemeToggle = "true";
+            themeButton.onclick = toggleTheme;
+            themeButton.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+            themeButton.setAttribute("aria-label", document.body.classList.contains("dark") ? "Switch to light theme" : "Switch to dark theme");
+            themeButton.title = themeButton.getAttribute("aria-label");
+
+            while (actions.querySelectorAll("[data-shell-theme-toggle]").length > 1) {
+                actions.querySelectorAll("[data-shell-theme-toggle]")[0].remove();
+            }
         });
     }
 
@@ -122,47 +210,40 @@
             actions.appendChild(themeButton);
         }
         const existingDateButton = topbar.querySelector(".calendar-btn");
-        if (existingDateButton && pageName === "dashboard.html") existingDateButton.dataset.shellDate = "true";
+        if (existingDateButton) existingDateButton.dataset.shellDate = "true";
         if (!topbar.querySelector("[data-shell-date]")) {
             const dateButton = document.createElement("button");
             dateButton.type = "button";
             dateButton.dataset.shellDate = "true";
-            dateButton.innerHTML = pageName === "dashboard.html"
-                ? "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", weekday: "short" }) + "</span>"
-                : "📅";
+            dateButton.innerHTML = "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" }) + "</span>";
             dateButton.addEventListener("click", () => { location.href = "calendar.html"; });
             actions.insertBefore(dateButton, actions.firstChild);
+        } else {
+            const dateButton = topbar.querySelector("[data-shell-date]");
+            dateButton.innerHTML = "📅 <span id=\"date\">" + new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" }) + "</span>";
         }
-        if (!actions.textContent.includes("🔔")) {
+        if (!actions.querySelector(".notification-btn, [aria-label='Notifications'], [aria-label='Open notifications']")) {
             const notifications = document.createElement("button");
             notifications.type = "button";
+            notifications.className = "notification-btn";
             notifications.setAttribute("aria-label", "Notifications");
             notifications.textContent = "🔔";
             notifications.addEventListener("click", () => { location.href = "notifications.html"; });
             actions.appendChild(notifications);
         }
-        if (!actions.textContent.includes("👤")) {
-            const profile = document.createElement("button");
-            profile.type = "button";
-            profile.setAttribute("aria-label", "Profile");
-            profile.textContent = "👤";
-            profile.addEventListener("click", () => { location.href = "profile.html"; });
-            actions.appendChild(profile);
-        }
+        const notificationButtons = actions.querySelectorAll(".notification-btn, [aria-label='Notifications'], [aria-label='Open notifications']");
+        notificationButtons.forEach((button, index) => {
+            if (index > 0) button.remove();
+        });
     }
 
     function ensureBackground() {
         const background = document.querySelector(".background");
         if (!background) return;
-        if (!background.querySelector(".study-float, .float")) {
-            background.insertAdjacentHTML("beforeend", '<div class="study-float book-one">📚</div><div class="study-float book-two">📖</div><div class="study-float pencil">✏️</div><div class="study-float calendar-float">📅</div>');
-        }
-        if (!background.querySelector(".particles")) {
-            background.insertAdjacentHTML("beforeend", '<div class="particles"><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span></div>');
-        }
-        if (!background.querySelector(".stars")) {
-            background.insertAdjacentHTML("beforeend", '<div class="stars"><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span></div>');
-        }
+        background.querySelectorAll(".study-float, .float, .float-object, .particles, .stars").forEach(function (effect) {
+            effect.remove();
+        });
+        background.insertAdjacentHTML("beforeend", '<div class="study-float book-one">📚</div><div class="study-float book-two">📖</div><div class="study-float pencil">✏️</div><div class="study-float calendar-float">📅</div><div class="particles"><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span><span class="particle"></span></div><div class="stars"><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span></div>');
     }
 
     function ensureMasterShell() {
@@ -221,28 +302,14 @@
         const link = function (page) {
             return '<a href="' + page[0] + '" class="' + (page[0] === current ? "active" : "") + '"><span class="nav-icon">' + page[2] + "</span>" + page[1] + "</a>";
         };
-        const langButton = '<button type="button" data-shell-language-toggle style="width: 100%; margin-top: 10px; padding: 8px; background: var(--purple); color: white; border: none; border-radius: 8px; cursor: pointer;"><span class="nav-icon">🌐</span> <span id="lang-toggle-text">English</span></button>';
         drawer.innerHTML = '<h2>Due<span>Mate</span></h2><div class="app-shell-section-title">Main</div><nav>' +
             mainPages.map(link).join("") +
             '</nav><div class="app-shell-section-title">Account</div><nav>' +
             accountPages.map(link).join("") +
             '<button type="button" data-shell-logout><span class="nav-icon">🚪</span> Logout</button>' +
-            langButton +
             '</nav>';
         document.body.append(overlay, drawer);
         overlay.addEventListener("click", closeMenu);
-        
-        // Language toggle
-        drawer.querySelector("[data-shell-language-toggle]").addEventListener("click", function () {
-            const currentLang = window.dueMateSettings ? window.dueMateSettings.getSetting("language") : "en";
-            const newLang = currentLang === "en" ? "ta" : "en";
-            if (window.dueMateSettings) {
-                window.dueMateSettings.setSetting("language", newLang);
-                window.dueMateSettings.applyLanguage();
-                document.getElementById("lang-toggle-text").textContent = newLang === "en" ? "English" : "தமிழ்";
-            }
-        });
-        
         drawer.querySelector("[data-shell-logout]").addEventListener("click", function () {
             sessionStorage.clear();
             location.href = "index.html";
@@ -313,16 +380,25 @@
         });
     }
 
+    function removeDeprecatedControls() {
+        document.querySelectorAll("#settingsShortcut, #settingsBtn, [href='settings.html'], [onclick*='settings.html']").forEach(function (control) {
+            control.remove();
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         document.body.classList.toggle("staff-shell", Boolean(isStaff));
         document.body.classList.toggle("dashboard-shell-page", pageName === "dashboard.html");
         ensureStaffTopbar();
         ensureTopbarThemeButton();
+        ensureCommonTopbarControls();
         applyTheme();
         updateGuestThemeIcon();
         ensureBackground();
         normalizeNativeDrawer();
+        removeDeprecatedControls();
         updateNotificationBadge();
+        normalizeVerificationStatusLabels();
 
         document.querySelectorAll(".sidebar .nav-icon").forEach(function (icon) {
             const link = icon.closest("a");
@@ -419,7 +495,7 @@ window.authenticatedFetch = function(url, options = {}) {
 window.fetchNotifications = async function() {
     try {
         const response = await window.authenticatedFetch(
-            window.API_URL + "/api/notifications"
+            (window.API_BASE || "http://localhost:5000") + "/api/notifications"
         );
         if (!response.ok) return [];
         const data = await response.json();
@@ -433,7 +509,7 @@ window.fetchNotifications = async function() {
 window.markNotificationAsRead = async function(notificationId) {
     try {
         await window.authenticatedFetch(
-            window.API_URL + "/api/notifications/" + notificationId + "/read",
+            (window.API_BASE || "http://localhost:5000") + "/api/notifications/" + notificationId + "/read",
             { method: "PATCH" }
         );
     } catch (error) {
@@ -444,7 +520,7 @@ window.markNotificationAsRead = async function(notificationId) {
 window.deleteNotification = async function(notificationId) {
     try {
         await window.authenticatedFetch(
-            window.API_URL + "/api/notifications/" + notificationId,
+            (window.API_BASE || "http://localhost:5000") + "/api/notifications/" + notificationId,
             { method: "DELETE" }
         );
     } catch (error) {
@@ -460,7 +536,7 @@ window.deleteNotification = async function(notificationId) {
 window.fetchUserSettings = async function() {
     try {
         const response = await window.authenticatedFetch(
-            window.API_URL + "/api/settings"
+            (window.API_BASE || "http://localhost:5000") + "/api/settings"
         );
         if (!response.ok) return null;
         const data = await response.json();
@@ -474,7 +550,7 @@ window.fetchUserSettings = async function() {
 window.updateUserSettings = async function(settings) {
     try {
         const response = await window.authenticatedFetch(
-            window.API_URL + "/api/settings",
+            (window.API_BASE || "http://localhost:5000") + "/api/settings",
             {
                 method: "PUT",
                 headers: {

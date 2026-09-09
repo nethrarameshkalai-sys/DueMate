@@ -2108,7 +2108,7 @@
             }
 
             try {
-                const token = sessionStorage.getItem('jwtToken');
+                const token = sessionStorage.getItem('duemate-token');
                 if (!token) {
                     return; // No token, skip backend sync
                 }
@@ -2185,7 +2185,7 @@
             if (userEmail && userEmail !== "default-user") {
                 try {
                     await window.authenticatedFetch(
-                        `${API_URL}/api/settings`,
+                        `${window.API_BASE || 'http://localhost:5000'}/api/settings`,
                         {
                             method: "PUT",
                             headers: {

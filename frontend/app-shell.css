@@ -85,7 +85,69 @@ body {
 
 .background .particles,
 .background .stars {
+    position: absolute;
+    inset: 0;
     pointer-events: none;
+}
+
+body .background .study-float {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.18;
+    animation: appStudyFloat 10s ease-in-out infinite;
+}
+
+body .background .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--purple);
+    opacity: 0.3;
+    animation: appParticleFloat 16s linear infinite;
+}
+
+body .background .particle:nth-child(1) { left: 8%; top: 80%; animation-duration: 15s; }
+body .background .particle:nth-child(2) { left: 22%; top: 72%; animation-duration: 18s; }
+body .background .particle:nth-child(3) { left: 40%; top: 88%; animation-duration: 14s; }
+body .background .particle:nth-child(4) { left: 58%; top: 80%; animation-duration: 20s; }
+body .background .particle:nth-child(5) { left: 76%; top: 84%; animation-duration: 17s; }
+body .background .particle:nth-child(6) { left: 91%; top: 72%; animation-duration: 16s; }
+
+@keyframes appParticleFloat {
+    0% { transform: translateY(80px) scale(0); opacity: 0; }
+    20% { opacity: 0.35; }
+    70% { transform: translateY(-220px) translateX(35px) scale(1); }
+    100% { transform: translateY(-430px) translateX(-25px) scale(0); opacity: 0; }
+}
+
+body .background .stars { opacity: 0; transition: opacity 0.7s ease; }
+body.dark .background .stars { opacity: 1; }
+body .background .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 8px white;
+    animation: appTwinkle 4s ease-in-out infinite;
+}
+
+body .background .star:nth-child(1) { left: 7%; top: 12%; }
+body .background .star:nth-child(2) { left: 18%; top: 30%; animation-delay: 1s; }
+body .background .star:nth-child(3) { left: 30%; top: 9%; animation-delay: 2s; }
+body .background .star:nth-child(4) { left: 44%; top: 20%; animation-delay: 0.7s; }
+body .background .star:nth-child(5) { left: 57%; top: 12%; animation-delay: 1.5s; }
+body .background .star:nth-child(6) { left: 71%; top: 22%; animation-delay: 2.5s; }
+body .background .star:nth-child(7) { left: 86%; top: 11%; animation-delay: 1.1s; }
+body .background .star:nth-child(8) { left: 94%; top: 38%; animation-delay: 2.8s; }
+body .background .star:nth-child(9) { left: 80%; top: 68%; animation-delay: 1.8s; }
+body .background .star:nth-child(10) { left: 55%; top: 78%; animation-delay: 2.4s; }
+
+@keyframes appTwinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.7); }
+    50% { opacity: 1; transform: scale(1.7); }
 }
 
 .nav-icon {
@@ -309,6 +371,7 @@ body.staff-page .app-shell-staff-topbar { width: min(1180px,calc(100% - 44px)); 
 body.staff-page .app-shell-staff-topbar .left-top, body.staff-page .app-shell-staff-topbar .top-actions { display: flex; align-items: center; gap: 10px; }
 body.staff-page .app-shell-staff-topbar .menu-btn, body.staff-page .app-shell-staff-topbar .top-actions button { width: 45px; min-height: 45px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 30px var(--shadow); backdrop-filter: blur(15px); transition: transform .25s ease,background .25s ease; }
 body.staff-page .app-shell-staff-topbar .menu-btn:hover, body.staff-page .app-shell-staff-topbar .top-actions button:hover { transform: translateY(-2px); background: rgba(117,108,255,.08); }
+body.staff-page .app-shell-staff-topbar .top-actions button[aria-label="Notifications"] { display: none; }
 body.staff-page .app-shell-staff-topbar .brand { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
 body.staff-page .app-shell-staff-topbar .brand span { color: var(--purple); }
 body.staff-page .app-shell-staff-topbar .top-actions button[data-shell-date] { width: auto; min-width: 132px; font-size: 11px; font-weight: 800; }
@@ -331,4 +394,8 @@ body.staff-page button, body.staff-page .button { border: 0; border-radius: 12px
 body.staff-page button:hover, body.staff-page .button:hover { transform: translateY(-2px); }
 body.staff-page button.secondary, body.staff-page .button.secondary { background: rgba(117,108,255,.1); color: var(--purple); box-shadow: none; }
 body.staff-page .empty { color: var(--muted); font: 11px/1.5 "Segoe UI",Inter,Arial,sans-serif; }
+body.staff-page .background .particle { animation-name: appParticleFloat; }
+body.staff-page .background .stars { opacity: 0; transition: opacity 0.7s ease; }
+body.staff-page.dark .background .stars { opacity: 1; }
+body.staff-page .background .star { animation-name: appTwinkle; }
 @media (max-width:800px) { body.staff-page .app-shell-staff-topbar { width: calc(100% - 28px); margin: 15px auto 24px; } body.staff-page .app-shell-staff-topbar .top-actions button[data-shell-date] { min-width: 45px; width: 45px; font-size: 0; } body.staff-page .page { padding: 0 14px 50px; } body.staff-page .toolbar, body.staff-page .filters { flex-direction: column; } body.staff-page table { font-size: 11px; } body.staff-page th, body.staff-page td { padding: 10px 5px; } }

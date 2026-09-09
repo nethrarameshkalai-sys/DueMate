@@ -699,37 +699,6 @@
             margin-bottom: 22px;
         }
 
-        .timetable-grid {
-            margin-bottom: 30px;
-        }
-
-        .timetable-card {
-            min-height: 240px;
-        }
-
-        .timetable-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 14px;
-            background: rgba(85,213,176,0.07);
-            border: 1px solid rgba(85,213,176,0.1);
-        }
-
-        .timetable-time {
-            width: 72px;
-            flex-shrink: 0;
-            color: var(--mint);
-            font-size: 10px;
-            font-weight: 800;
-            line-height: 1.4;
-        }
-
-        .timetable-item .content-item-title {
-            margin-bottom: 3px;
-        }
-
         .day-card {
 
             position: relative;
@@ -1228,254 +1197,6 @@
             color: var(--muted);
 
             font-size: 9px;
-        }
-
-        /* =====================================================
-           SUBJECTS - BOTTOM MANAGEMENT
-           ===================================================== */
-
-        .subjects-section {
-
-            padding: 22px;
-
-            border: 1px solid var(--border);
-            border-radius: 24px;
-
-            background: var(--surface);
-
-            box-shadow:
-                0 18px 45px var(--shadow);
-
-            backdrop-filter: blur(18px);
-
-            margin-bottom: 20px;
-        }
-
-        .subjects-header {
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 15px;
-
-            margin-bottom: 18px;
-        }
-
-        .subjects-title {
-
-            display: flex;
-            align-items: center;
-
-            gap: 12px;
-        }
-
-        .subjects-title-icon {
-
-            width: 43px;
-            height: 43px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 13px;
-
-            background:
-                rgba(117,108,255,0.1);
-
-            font-size: 20px;
-        }
-
-        .subjects-title h2 {
-
-            font-size: 20px;
-            margin-bottom: 3px;
-        }
-
-        .subjects-title p {
-
-            color: var(--muted);
-            font-size: 11px;
-        }
-
-        .add-subject-btn {
-
-            display: inline-flex;
-
-            align-items: center;
-            justify-content: center;
-
-            gap: 7px;
-
-            padding: 10px 14px;
-
-            border: 0;
-            border-radius: 12px;
-
-            background: var(--purple);
-
-            color: white;
-
-            font-size: 11px;
-            font-weight: 800;
-
-            box-shadow:
-                0 8px 20px
-                rgba(117,108,255,0.25);
-
-            transition:
-                transform 0.2s ease;
-        }
-
-        .add-subject-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .subjects-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(4,minmax(0,1fr));
-
-            gap: 12px;
-        }
-
-        .subject-item {
-
-            position: relative;
-
-            padding: 16px;
-
-            border:
-                1px solid
-                rgba(117,108,255,0.08);
-
-            border-radius: 17px;
-
-            background:
-                rgba(120,125,160,0.055);
-
-            transition:
-                transform 0.2s ease,
-                background 0.2s ease;
-        }
-
-        .subject-item:hover {
-
-            transform: translateY(-3px);
-
-            background:
-                rgba(117,108,255,0.08);
-        }
-
-        .subject-color {
-
-            width: 10px;
-            height: 10px;
-
-            border-radius: 50%;
-
-            margin-bottom: 12px;
-
-            box-shadow:
-                0 0 10px currentColor;
-        }
-
-        .subject-name {
-
-            font-size: 13px;
-            font-weight: 800;
-
-            padding-right: 60px;
-
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .subject-actions {
-
-            position: absolute;
-
-            right: 9px;
-            top: 9px;
-
-            display: flex;
-            gap: 4px;
-        }
-
-        .subject-action {
-
-            width: 27px;
-            height: 27px;
-
-            border: 0;
-            border-radius: 8px;
-
-            background:
-                rgba(120,125,160,0.08);
-
-            color: var(--muted);
-
-            font-size: 12px;
-
-            transition:
-                background 0.2s ease,
-                color 0.2s ease;
-        }
-
-        .subject-action:hover {
-
-            background:
-                rgba(117,108,255,0.12);
-
-            color: var(--purple);
-        }
-
-        .subject-action.delete:hover {
-
-            background:
-                rgba(255,111,145,0.1);
-
-            color: var(--danger);
-        }
-
-        .subjects-empty {
-
-            min-height: 120px;
-
-            display: flex;
-
-            flex-direction: column;
-
-            align-items: center;
-            justify-content: center;
-
-            text-align: center;
-
-            padding: 20px;
-
-            grid-column: 1 / -1;
-        }
-
-        .subjects-empty-icon {
-
-            font-size: 25px;
-            margin-bottom: 8px;
-        }
-
-        .subjects-empty h4 {
-
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .subjects-empty p {
-
-            color: var(--muted);
-
-            font-size: 10px;
         }
 
         /* =====================================================
@@ -2163,7 +1884,7 @@
         }
 
     </style>
-    <link rel="stylesheet" href="app-shell.css?v=20260920">
+    <link rel="stylesheet" href="app-shell.css?v=20260921">
 
     <style>
         .subjects-section { display: none; }
@@ -2171,7 +1892,7 @@
 </head>
 
 <body>
-    <script src="app-shell.js?v=20260918"></script>
+    <script src="app-shell.js?v=20260921"></script>
 
     <!-- =====================================================
          BACKGROUND
@@ -2266,17 +1987,6 @@
                 <span class="nav-icon">🏠</span>
 
                 Dashboard
-
-            </a>
-
-
-            <a
-                href="calendar.html"
-                class="nav-link">
-
-                <span class="nav-icon">📅</span>
-
-                Calendar
 
             </a>
 
@@ -2411,50 +2121,6 @@
             <p>
                 Here's what you need to know for today and tomorrow.
             </p>
-
-        </section>
-
-
-        <!-- TIMETABLE -->
-
-        <section id="dashboardTimetable" hidden>
-
-            <div class="section-header">
-                <h2>Timetable</h2>
-                <span>Your classes for today and tomorrow</span>
-            </div>
-
-            <div class="day-grid timetable-grid">
-
-                <article class="day-card timetable-card">
-                    <div class="day-heading">
-                        <div class="day-heading-left">
-                            <div class="day-icon">🎓</div>
-                            <div>
-                                <h3>Today</h3>
-                                <p id="timetableTodayLabel">Loading date...</p>
-                            </div>
-                        </div>
-                        <span class="day-badge">Classes</span>
-                    </div>
-                    <div class="content-list" id="timetableTodayContent"></div>
-                </article>
-
-                <article class="day-card tomorrow timetable-card">
-                    <div class="day-heading">
-                        <div class="day-heading-left">
-                            <div class="day-icon">📖</div>
-                            <div>
-                                <h3>Tomorrow</h3>
-                                <p id="timetableTomorrowLabel">Loading date...</p>
-                            </div>
-                        </div>
-                        <span class="day-badge">Classes</span>
-                    </div>
-                    <div class="content-list" id="timetableTomorrowContent"></div>
-                </article>
-
-            </div>
 
         </section>
 
@@ -2741,197 +2407,7 @@
         </section>
 
 
-        <!-- =================================================
-             SUBJECT MANAGEMENT AT BOTTOM
-             ================================================= -->
-
-        <section class="subjects-section">
-
-            <div class="subjects-header">
-
-                <div class="subjects-title">
-
-                    <div class="subjects-title-icon">
-                        📚
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            My Subjects
-                        </h2>
-
-                        <p>
-                            Manage subjects used across DueMate
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    class="add-subject-btn"
-                    type="button"
-                    onclick="openSubjectModal()">
-
-                    +
-
-                    Add Subject
-
-                </button>
-
-            </div>
-
-
-            <div
-                class="subjects-grid"
-                id="subjectsGrid">
-
-            </div>
-
-        </section>
-
     </main>
-
-
-    <!-- =====================================================
-         SUBJECT MODAL
-         ===================================================== -->
-
-    <div
-        class="modal-overlay"
-        id="subjectModal"
-        onclick="handleModalBackground(event)">
-
-        <div class="modal-card">
-
-            <div class="modal-header">
-
-                <h3 id="subjectModalTitle">
-                    Add Subject
-                </h3>
-
-                <button
-                    class="modal-close"
-                    type="button"
-                    onclick="closeSubjectModal()">
-
-                    ×
-
-                </button>
-
-            </div>
-
-
-            <form
-                id="subjectForm"
-                onsubmit="saveSubject(event)">
-
-                <div class="form-group">
-
-                    <label for="subjectName">
-                        Subject Name
-                    </label>
-
-                    <input
-                        type="text"
-                        id="subjectName"
-                        placeholder="Example: Data Structures"
-                        maxlength="60"
-                        required>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Subject Color
-                    </label>
-
-                    <div class="color-options">
-
-                        <button
-                            type="button"
-                            class="color-option selected"
-                            data-color="#756cff"
-                            style="background:#756cff"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                        <button
-                            type="button"
-                            class="color-option"
-                            data-color="#5d9cff"
-                            style="background:#5d9cff"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                        <button
-                            type="button"
-                            class="color-option"
-                            data-color="#ff86b6"
-                            style="background:#ff86b6"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                        <button
-                            type="button"
-                            class="color-option"
-                            data-color="#55d5b0"
-                            style="background:#55d5b0"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                        <button
-                            type="button"
-                            class="color-option"
-                            data-color="#ffd76b"
-                            style="background:#ffd76b"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                        <button
-                            type="button"
-                            class="color-option"
-                            data-color="#ff8a65"
-                            style="background:#ff8a65"
-                            onclick="selectSubjectColor(this)">
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="modal-btn cancel-btn"
-                        onclick="closeSubjectModal()">
-
-                        Cancel
-
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="modal-btn save-btn"
-                        id="subjectSaveButton">
-
-                        Add Subject
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
 
 
     <!-- =====================================================
@@ -3173,108 +2649,6 @@
         updateDates();
 
 
-        function getTimetableDayName(date) {
-
-            return [
-                "Sunday", "Monday", "Tuesday", "Wednesday",
-                "Thursday", "Friday", "Saturday"
-            ][date.getDay()];
-        }
-
-
-        function getTimetableEntries(dayName) {
-
-            const email = getCurrentUserEmail();
-
-            if (!email) {
-                return [];
-            }
-
-            try {
-                const key = "duemate-timetable-" + encodeURIComponent(email);
-                const saved = localStorage.getItem(key);
-                const data = saved ? JSON.parse(saved) : {};
-                const entries = Array.isArray(data[dayName]) ? data[dayName] : [];
-
-                return entries
-                    .filter(function(entry) {
-                        return entry && entry.subjectName;
-                    })
-                    .sort(function(a, b) {
-                        return Number(a.period || 0) - Number(b.period || 0) ||
-                            String(a.start || "").localeCompare(String(b.start || ""));
-                    });
-            }
-            catch {
-                return [];
-            }
-        }
-
-
-        function renderTimetableList(container, entries, emptyDescription) {
-
-            if (!container) {
-                return;
-            }
-
-            if (!entries.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🎓</div>
-                        <h4>No classes scheduled</h4>
-                        <p>${emptyDescription}</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = "";
-
-            entries.forEach(function(entry) {
-                const item = document.createElement("div");
-                const details = [entry.room, entry.faculty].filter(Boolean).join(" • ");
-                const time = entry.start && entry.end
-                    ? `${formatTaskTime(entry.start)} - ${formatTaskTime(entry.end)}`
-                    : "Time not set";
-
-                item.className = "timetable-item";
-                item.innerHTML = `
-                    <div class="timetable-time">${escapeHTML(time)}</div>
-                    <div class="content-item-info">
-                        <div class="content-item-title">${escapeHTML(entry.subjectName)}</div>
-                        <div class="content-item-meta">${escapeHTML(details || "Room or faculty not set")}</div>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-
-        function renderDashboardTimetable() {
-
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-
-            document.getElementById("timetableTodayLabel").textContent = formatDate(today);
-            document.getElementById("timetableTomorrowLabel").textContent = formatDate(tomorrow);
-
-            renderTimetableList(
-                document.getElementById("timetableTodayContent"),
-                getTimetableEntries(getTimetableDayName(today)),
-                "Add today's classes from your timetable."
-            );
-            renderTimetableList(
-                document.getElementById("timetableTomorrowContent"),
-                getTimetableEntries(getTimetableDayName(tomorrow)),
-                "Add tomorrow's classes from your timetable."
-            );
-        }
-
-
-        renderDashboardTimetable();
-
-
         /* =====================================================
            GREETING
            ===================================================== */
@@ -3423,617 +2797,6 @@
 
 
         /* =====================================================
-           SUBJECT STORAGE
-           ===================================================== */
-
-        function getSubjectStorageKey() {
-
-            const email =
-                getCurrentUserEmail();
-
-            if (!email) {
-
-                return null;
-            }
-
-            return (
-                "duemate-subjects-" +
-                encodeURIComponent(email)
-            );
-        }
-
-
-        function getSubjects() {
-
-            const storageKey = getSubjectStorageKey();
-
-            if (!storageKey) {
-                return [];
-            }
-
-            try {
-
-                const saved =
-                    localStorage.getItem(
-                        storageKey
-                    );
-
-                if (!saved) {
-                    return [];
-                }
-
-                const subjects =
-                    JSON.parse(saved);
-
-                return Array.isArray(subjects)
-                    ? subjects
-                    : [];
-
-            } catch (error) {
-
-                console.error(
-                    "Unable to load subjects:",
-                    error
-                );
-
-                return [];
-            }
-        }
-
-
-        function saveSubjects(subjects) {
-
-            const storageKey = getSubjectStorageKey();
-
-            if (!storageKey) {
-                return;
-            }
-
-            localStorage.setItem(
-                storageKey,
-                JSON.stringify(subjects)
-            );
-        }
-
-
-        /* =====================================================
-           SUBJECT MANAGEMENT
-           ===================================================== */
-
-        let selectedSubjectColor =
-            "#756cff";
-
-        let editingSubjectId =
-            null;
-
-
-        function renderSubjects() {
-
-            const grid =
-                document.getElementById(
-                    "subjectsGrid"
-                );
-
-
-            const subjects =
-                getSubjects();
-
-
-            grid.innerHTML =
-                "";
-
-
-            if (subjects.length === 0) {
-
-                grid.innerHTML = `
-
-                    <div class="subjects-empty">
-
-                        <div class="subjects-empty-icon">
-                            📚
-                        </div>
-
-                        <h4>
-                            No subjects added yet
-                        </h4>
-
-                        <p>
-                            Add your subjects here.
-                            They can be reused across DueMate.
-                        </p>
-
-                    </div>
-
-                `;
-
-                return;
-            }
-
-
-            subjects.forEach(
-                function(subject) {
-
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
-
-                    item.className =
-                        "subject-item";
-
-
-                    const color =
-                        subject.color ||
-                        "#756cff";
-
-
-                    item.innerHTML = `
-
-                        <div class="subject-actions">
-
-                            <button
-                                type="button"
-                                class="subject-action"
-                                title="Edit subject">
-
-                                ✏️
-
-                            </button>
-
-                            <button
-                                type="button"
-                                class="subject-action delete"
-                                title="Delete subject">
-
-                                ×
-
-                            </button>
-
-                        </div>
-
-
-                        <div
-                            class="subject-color"
-                            style="
-                                background:${escapeHTML(color)};
-                                color:${escapeHTML(color)};
-                            ">
-
-                        </div>
-
-
-                        <div class="subject-name">
-                            ${escapeHTML(subject.name)}
-                        </div>
-
-                    `;
-
-
-                    const buttons =
-                        item.querySelectorAll(
-                            ".subject-action"
-                        );
-
-
-                    buttons[0].addEventListener(
-                        "click",
-                        function() {
-
-                            editSubject(
-                                subject.id
-                            );
-
-                        }
-                    );
-
-
-                    buttons[1].addEventListener(
-                        "click",
-                        function() {
-
-                            deleteSubject(
-                                subject.id
-                            );
-
-                        }
-                    );
-
-
-                    grid.appendChild(item);
-
-                }
-            );
-        }
-
-
-        function openSubjectModal(
-            subjectId = null
-        ) {
-
-            const modal =
-                document.getElementById(
-                    "subjectModal"
-                );
-
-            const form =
-                document.getElementById(
-                    "subjectForm"
-                );
-
-            const title =
-                document.getElementById(
-                    "subjectModalTitle"
-                );
-
-            const saveButton =
-                document.getElementById(
-                    "subjectSaveButton"
-                );
-
-
-            editingSubjectId =
-                subjectId;
-
-
-            form.reset();
-
-
-            selectedSubjectColor =
-                "#756cff";
-
-
-            document
-                .querySelectorAll(
-                    ".color-option"
-                )
-                .forEach(
-                    function(button,index) {
-
-                        button.classList.toggle(
-                            "selected",
-                            index === 0
-                        );
-                    }
-                );
-
-
-            if (subjectId) {
-
-                const subject =
-                    getSubjects().find(
-                        function(item) {
-
-                            return (
-                                item.id ===
-                                subjectId
-                            );
-
-                        }
-                    );
-
-
-                if (subject) {
-
-                    document.getElementById(
-                        "subjectName"
-                    ).value =
-                        subject.name;
-
-
-                    selectedSubjectColor =
-                        subject.color ||
-                        "#756cff";
-
-
-                    document
-                        .querySelectorAll(
-                            ".color-option"
-                        )
-                        .forEach(
-                            function(button) {
-
-                                button.classList.toggle(
-                                    "selected",
-                                    button.dataset.color ===
-                                    selectedSubjectColor
-                                );
-
-                            }
-                        );
-
-
-                    title.textContent =
-                        "Edit Subject";
-
-                    saveButton.textContent =
-                        "Save Changes";
-                }
-
-            } else {
-
-                title.textContent =
-                    "Add Subject";
-
-                saveButton.textContent =
-                    "Add Subject";
-            }
-
-
-            modal.classList.add("show");
-
-
-            setTimeout(
-                function() {
-
-                    document
-                        .getElementById(
-                            "subjectName"
-                        )
-                        .focus();
-
-                },
-                100
-            );
-        }
-
-
-        function editSubject(id) {
-
-            if (!id) {
-                return;
-            }
-
-            openSubjectModal(id);
-        }
-
-
-        function closeSubjectModal() {
-
-            document
-                .getElementById(
-                    "subjectModal"
-                )
-                .classList.remove("show");
-
-            editingSubjectId =
-                null;
-        }
-
-
-        function handleModalBackground(event) {
-
-            if (
-                event.target &&
-                event.target.id ===
-                    "subjectModal"
-            ) {
-
-                closeSubjectModal();
-            }
-        }
-
-
-        function selectSubjectColor(button) {
-
-            if (!button) {
-                return;
-            }
-
-
-            selectedSubjectColor =
-                button.dataset.color ||
-                "#756cff";
-
-
-            document
-                .querySelectorAll(
-                    ".color-option"
-                )
-                .forEach(
-                    function(option) {
-
-                        option.classList.remove(
-                            "selected"
-                        );
-
-                    }
-                );
-
-
-            button.classList.add(
-                "selected"
-            );
-        }
-
-
-        function saveSubject(event) {
-
-            event.preventDefault();
-
-
-            const nameInput =
-                document.getElementById(
-                    "subjectName"
-                );
-
-
-            const name =
-                nameInput.value.trim();
-
-
-            if (!name) {
-
-                showToast(
-                    "Please enter a subject name."
-                );
-
-                return;
-            }
-
-
-            const subjects =
-                getSubjects();
-
-
-            const duplicate =
-                subjects.some(
-                    function(subject) {
-
-                        return (
-                            subject.id !==
-                                editingSubjectId &&
-
-                            String(subject.name)
-                                .trim()
-                                .toLowerCase() ===
-                            name.toLowerCase()
-                        );
-
-                    }
-                );
-
-
-            if (duplicate) {
-
-                showToast(
-                    "This subject is already added."
-                );
-
-                return;
-            }
-
-
-            if (editingSubjectId) {
-
-                const subject =
-                    subjects.find(
-                        function(item) {
-
-                            return (
-                                item.id ===
-                                editingSubjectId
-                            );
-
-                        }
-                    );
-
-
-                if (subject) {
-
-                    subject.name =
-                        name;
-
-                    subject.color =
-                        selectedSubjectColor;
-                }
-
-
-                saveSubjects(subjects);
-
-                renderSubjects();
-
-                closeSubjectModal();
-
-                showToast(
-                    "Subject updated successfully!"
-                );
-
-                return;
-            }
-
-
-            const newSubject = {
-
-                id:
-                    Date.now().toString(),
-
-                name:
-                    name,
-
-                color:
-                    selectedSubjectColor
-            };
-
-
-            subjects.push(
-                newSubject
-            );
-
-
-            saveSubjects(
-                subjects
-            );
-
-
-            renderSubjects();
-
-            closeSubjectModal();
-
-
-            showToast(
-                "Subject added successfully!"
-            );
-        }
-
-
-        function deleteSubject(id) {
-
-            if (!id) {
-                return;
-            }
-
-
-            const subject =
-                getSubjects().find(
-                    function(item) {
-
-                        return item.id === id;
-
-                    }
-                );
-
-
-            if (!subject) {
-                return;
-            }
-
-
-            const confirmed =
-                confirm(
-                    `Remove "${subject.name}" from DueMate?`
-                );
-
-
-            if (!confirmed) {
-                return;
-            }
-
-
-            const updated =
-                getSubjects().filter(
-                    function(item) {
-
-                        return item.id !== id;
-
-                    }
-                );
-
-
-            saveSubjects(updated);
-
-            renderSubjects();
-
-
-            showToast(
-                "Subject removed."
-            );
-        }
-
-
-        renderSubjects();
-
-
-        /* =====================================================
            TASK DATA
            ===================================================== */
 
@@ -4046,6 +2809,7 @@
             if (!email) {
                 dashboardAssignments = [];
                 renderDashboardTasks();
+                updateTaskSummary(0, 0, 0);
                 return;
             }
 
@@ -4067,10 +2831,12 @@
                     };
                 });
                 renderDashboardTasks();
+                updateTaskSummaryFromAssignments(dashboardAssignments);
             } catch (error) {
                 console.error("Dashboard assignment loading error:", error);
                 dashboardAssignments = [];
                 renderDashboardTasks();
+                updateTaskSummary(0, 0, 0);
             }
         }
 
@@ -4086,8 +2852,6 @@
                 dashboardTasks = [];
 
                 renderDashboardTasks();
-
-                updateTaskSummary(0,0,0);
 
                 return;
             }
@@ -4131,29 +2895,6 @@
                 renderDashboardTasks();
 
 
-                updateTaskSummary(
-                    dashboardTasks.length,
-                    dashboardTasks.filter(
-                        function(task) {
-
-                            return isTaskCompleted(
-                                task
-                            );
-
-                        }
-                    ).length,
-                    dashboardTasks.filter(
-                        function(task) {
-
-                            return !isTaskCompleted(
-                                task
-                            );
-
-                        }
-                    ).length
-                );
-
-
             } catch (error) {
 
                 console.error(
@@ -4168,12 +2909,6 @@
 
                 renderDashboardTasks();
 
-
-                updateTaskSummary(
-                    0,
-                    0,
-                    0
-                );
             }
         }
 
@@ -4783,6 +3518,36 @@
         }
 
 
+        function isAssignmentCompleted(assignment) {
+
+            const status = String(
+                assignment && assignment.assignment_status
+                    ? assignment.assignment_status
+                    : ""
+            ).trim().toLowerCase();
+
+            return status === "completed" || status === "verified";
+        }
+
+
+        function updateTaskSummaryFromAssignments(assignments) {
+
+            const list = Array.isArray(assignments)
+                ? assignments
+                : [];
+
+            const total = list.length;
+            const completed = list.filter(
+                function(item) {
+                    return isAssignmentCompleted(item);
+                }
+            ).length;
+            const pending = Math.max(total - completed, 0);
+
+            updateTaskSummary(total, completed, pending);
+        }
+
+
         /* =====================================================
            TASK SUMMARY
            ===================================================== */
@@ -4889,7 +3654,6 @@
                 ) {
 
                     closeDrawer();
-                    closeSubjectModal();
                     closeTaskDetail();
 
                 }
@@ -4996,21 +3760,11 @@
             ) {
                 applySavedTheme();
             }
-
-            if (event.key && event.key.indexOf("duemate-timetable-") === 0) {
-                renderDashboardTimetable();
-            }
-
-            if (event.key && event.key.indexOf("duemate-subjects-") === 0) {
-                renderSubjects();
-            }
         });
 
 
         document.addEventListener("visibilitychange", function() {
             if (!document.hidden) {
-                renderDashboardTimetable();
-                renderSubjects();
                 loadDashboardTasks();
                 loadDashboardAssignments();
             }
@@ -5019,8 +3773,6 @@
 
         window.addEventListener("pageshow", function() {
             applySavedTheme();
-            renderDashboardTimetable();
-            renderSubjects();
             loadDashboardTasks();
             loadDashboardAssignments();
         });
@@ -5038,7 +3790,6 @@
            LOAD DASHBOARD DATA
            ===================================================== */
 
-        renderDashboardTimetable();
         loadDashboardTasks();
         loadDashboardAssignments();
 

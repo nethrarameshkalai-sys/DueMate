@@ -2423,7 +2423,7 @@
         }
 
     </style>
-    <link rel="stylesheet" href="app-shell.css?v=20260920">
+    <link rel="stylesheet" href="app-shell.css?v=20260921">
 
     <style>
         .registration-mobile-row {
@@ -2434,7 +2434,8 @@
 
 
 <body>
-    <script src="app-shell.js?v=20260918"></script>
+    <script src="app-shell.js?v=20260921"></script>
+    <style>#settingsShortcut { display:none !important; }</style>
 
 
     <!-- =========================================================
@@ -2452,19 +2453,19 @@
         <div class="glow glow-three"></div>
 
 
-        <div class="float-object float-one">
+        <div class="study-float book-one">
             📚
         </div>
 
-        <div class="float-object float-two">
-            🎓
+        <div class="study-float book-two">
+            📖
         </div>
 
-        <div class="float-object float-three">
+        <div class="study-float pencil">
             ✏️
         </div>
 
-        <div class="float-object float-four">
+        <div class="study-float calendar-float">
             📅
         </div>
 
@@ -2530,7 +2531,7 @@
                         onclick="window.location.href='calendar.html'"
                         aria-label="Open calendar"
                     >
-                        📅
+                        📅 <span class="calendar-date-label" id="dashboardCurrentDate">Today</span>
 
                     </button>
 
