@@ -2112,6 +2112,15 @@
             };
         }
 
+        function getNotificationUserEmail() {
+            try {
+                const user = JSON.parse(sessionStorage.getItem("duemate-user") || "null");
+                return String(user && user.email || sessionStorage.getItem("duemate-user-email") || "").trim().toLowerCase();
+            } catch (_) {
+                return String(sessionStorage.getItem("duemate-user-email") || "").trim().toLowerCase();
+            }
+        }
+
         function normalizeNotification(row) {
             const type = String(row.type || "").toLowerCase();
             const category = type.includes("assignment") || type.includes("deadline")
@@ -2492,7 +2501,7 @@
            READ / UNREAD
         ===================================================== */
 
-        function toggleRead(id) {
+        async function toggleRead(id) {
 
             const item =
                 notifications.find(
@@ -2506,26 +2515,26 @@
             }
 
 
-            item.read =
-                !item.read;
-
-
+            const nextRead = !item.read;
+            const response = await fetch(API + "/api/notifications/" + encodeURIComponent(id) + "/read", {
+                method: "PATCH",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ readStatus: nextRead ? 1 : 0 })
+            });
+            if (!response.ok) return;
+            item.read = nextRead;
             renderNotifications();
         }
 
 
-        function markAllRead() {
-
-            notifications.forEach(
-                notification => {
-
-                    notification.read =
-                        true;
-
-                }
-            );
-
-
+        async function markAllRead() {
+            const unread = notifications.filter(notification => !notification.read);
+            await Promise.all(unread.map(notification => fetch(API + "/api/notifications/" + encodeURIComponent(notification.id) + "/read", {
+                method: "PATCH",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ readStatus: 1 })
+            })));
+            notifications.forEach(notification => { notification.read = true; });
             renderNotifications();
         }
 
@@ -2534,15 +2543,13 @@
            DELETE
         ===================================================== */
 
-        function deleteNotification(id) {
-
-            notifications =
-                notifications.filter(
-                    notification =>
-                        notification.id !== id
-                );
-
-
+        async function deleteNotification(id) {
+            const response = await fetch(API + "/api/notifications/" + encodeURIComponent(id), {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) return;
+            notifications = notifications.filter(notification => notification.id !== id);
             renderNotifications();
         }
 
@@ -2608,7 +2615,8 @@
 
             const shouldShow = unread > 0;
             if (dot) dot.style.display = shouldShow ? "block" : "none";
-            localStorage.setItem("duemate-notification-badge", shouldShow ? "show" : "hide");
+            const userEmail = getNotificationUserEmail();
+            if (userEmail) localStorage.setItem("duemate-notification-badge-" + encodeURIComponent(userEmail), shouldShow ? "show" : "hide");
 
             document.querySelectorAll(".notification-btn .notification-dot").forEach(function (badge) {
                 if (badge) badge.style.display = shouldShow ? "block" : "none";
@@ -2644,11 +2652,13 @@
         }
 
 
-        function clearAllNotifications() {
-
+        async function clearAllNotifications() {
+            const response = await fetch(API + "/api/notifications", {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) return;
             notifications = [];
-            localStorage.setItem("duemate-notification-badge", "hide");
-
             renderNotifications();
 
             closeClearModal();
@@ -2741,12 +2751,22 @@
            registration / Settings.
         ===================================================== */
 
+        function getSavedNotificationTheme() {
+            try {
+                const user = JSON.parse(sessionStorage.getItem("duemate-user") || "null");
+                const email = String(user && user.email || "").trim().toLowerCase();
+                const userTheme = email && localStorage.getItem("duemate-theme-" + encodeURIComponent(email));
+                if (userTheme) return userTheme;
+            } catch (error) {
+                console.warn("Unable to load saved notification theme:", error);
+            }
+            return localStorage.getItem("duemate-theme") || "system";
+        }
+
         function applySavedTheme() {
 
             const savedTheme =
-                localStorage.getItem(
-                    "duemate-theme"
-                ) || "system";
+                getSavedNotificationTheme();
 
 
             if (
@@ -2802,9 +2822,7 @@
                 function() {
 
                     const savedTheme =
-                        localStorage.getItem(
-                            "duemate-theme"
-                        ) || "system";
+                        getSavedNotificationTheme();
 
 
                     if (

@@ -1137,19 +1137,17 @@
                     getUserTheme(userEmail);
 
 
-                if (
-                    data.user.theme === "dark" ||
-                    data.user.theme === "light"
-                ) {
+                if (["dark", "light", "system"].includes(data.user.theme)) {
 
                     theme =
                         data.user.theme;
 
                     localStorage.setItem(
                         "duemate-theme-" +
-                        userEmail,
+                        encodeURIComponent(userEmail),
                         theme
                     );
+                    localStorage.setItem("duemate-theme", theme);
 
                 }
 

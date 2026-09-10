@@ -2204,6 +2204,34 @@
 
                 </article>
 
+                <!-- OVERDUE ASSIGNMENTS -->
+
+                <article class="day-card overdue-assignments">
+
+                    <div class="day-heading">
+
+                        <div class="day-heading-left">
+                            <div class="day-icon">⚠️</div>
+                            <div>
+                                <h3>Overdue assignments</h3>
+                                <p>Deadlines that have passed</p>
+                            </div>
+                        </div>
+
+                        <span class="day-badge">Overdue</span>
+
+                    </div>
+
+                    <div class="content-list" id="overdueContent">
+                        <div class="empty-state">
+                            <div class="empty-icon">✅</div>
+                            <h4>No overdue assignments</h4>
+                            <p>Assignments past their deadline will appear here.</p>
+                        </div>
+                    </div>
+
+                </article>
+
 
                 <!-- TOMORROW -->
 
@@ -3051,6 +3079,11 @@
                     }
                 );
 
+            const overdueContent = document.getElementById("overdueContent");
+            const overdueAssignments = dashboardAssignments.filter(function(assignment) {
+                return String(assignment.assignment_status || "").toLowerCase() === "overdue";
+            });
+
 
             renderTaskList(
                 todayContainer,
@@ -3067,6 +3100,14 @@
                 "📝",
                 "Nothing scheduled yet",
                 "Tomorrow's assignments and deadlines will appear here."
+            );
+
+            renderTaskList(
+                overdueContent,
+                overdueAssignments,
+                "⚠️",
+                "No overdue assignments",
+                "Assignments past their deadline will appear here."
             );
         }
 

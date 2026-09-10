@@ -2413,7 +2413,7 @@ app.get("/api/notifications", verifyToken, (req, res) => {
         const sql = `
             SELECT id, type, title, message, related_id, related_type, read_status, created_at
             FROM notifications
-            WHERE user_email = ?
+            WHERE user_email = ? AND deleted_at IS NULL
             ORDER BY created_at DESC
             LIMIT 50
         `;
@@ -2439,15 +2439,16 @@ app.get("/api/notifications", verifyToken, (req, res) => {
 app.patch("/api/notifications/:id/read", verifyToken, (req, res) => {
     const notificationId = String(req.params.id).trim();
     const userEmail = req.user.email;
+    const readStatus = req.body && req.body.readStatus === 0 ? 0 : 1;
 
     const sql = `
         UPDATE notifications
-        SET read_status = 1
+        SET read_status = ?
         WHERE id = ? AND user_email = ?
         LIMIT 1
     `;
 
-    db.query(sql, [notificationId, userEmail], (error, result) => {
+    db.query(sql, [readStatus, notificationId, userEmail], (error, result) => {
         if (error) {
             console.error("Mark notification read error:", error.message);
             return res.status(500).json({
@@ -2458,8 +2459,19 @@ app.patch("/api/notifications/:id/read", verifyToken, (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Notification marked as read."
+            message: readStatus ? "Notification marked as read." : "Notification marked as unread."
         });
+    });
+});
+
+// DELETE /api/notifications - Delete all notifications for the user
+app.delete("/api/notifications", verifyToken, (req, res) => {
+    db.query("UPDATE notifications SET deleted_at = CURRENT_TIMESTAMP WHERE user_email = ? AND deleted_at IS NULL", [req.user.email], (error) => {
+        if (error) {
+            console.error("Clear notifications error:", error.message);
+            return res.status(500).json({ success: false, message: "Unable to clear notifications." });
+        }
+        res.json({ success: true, message: "Notifications cleared successfully." });
     });
 });
 
@@ -2469,8 +2481,9 @@ app.delete("/api/notifications/:id", verifyToken, (req, res) => {
     const userEmail = req.user.email;
 
     const sql = `
-        DELETE FROM notifications
-        WHERE id = ? AND user_email = ?
+        UPDATE notifications
+        SET deleted_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_email = ? AND deleted_at IS NULL
         LIMIT 1
     `;
 
@@ -3302,8 +3315,9 @@ app.get("/api/staff/dashboard", verifyToken, staffOnly, (req, res) => {
 });
 
 app.get("/api/staff/verifications", verifyToken, staffOnly, (req, res) => {
-    db.query(`SELECT s.id, s.assignment_id, s.student_email, u.name AS student_name, u.year,
-        a.title, s.status, s.submitted_at, s.reviewed_at, s.viewed_at, s.file_name, s.feedback
+    db.query(`SELECT s.id, s.assignment_id, s.student_email, u.name AS student_name, u.year AS student_year,
+        a.title,
+        s.status, s.submitted_at, s.reviewed_at, s.viewed_at, s.file_name, s.feedback
         FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
         JOIN users u ON u.email = s.student_email
         WHERE a.teacher_email = ? ORDER BY s.submitted_at DESC`, [req.user.email], (error, submissions) => {
@@ -3433,7 +3447,9 @@ app.post("/api/assignments/:id/submissions", verifyToken, requireRole("student")
 });
 
 app.get("/api/assignments/:id/submissions", verifyToken, requireRole("teacher"), (req, res) => {
-    db.query(`SELECT s.*, a.title FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+    db.query(`SELECT s.*, a.title, u.name AS student_name, u.name AS studentName, u.year AS student_year, u.year AS year
+        FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
+        JOIN users u ON u.email = s.student_email
         JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
         WHERE s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department ORDER BY s.submitted_at DESC`, [req.user.email, req.params.id, req.user.email], (error, submissions) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to load submissions." });

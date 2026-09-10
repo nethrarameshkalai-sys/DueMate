@@ -30,4 +30,10 @@ const API=window.API_BASE||'http://localhost:5000';const auth=()=>({Authorizatio
 const verificationStatusLabels={submitted:"Submitted \u2022 Under Verification",resubmitted:"Resubmitted \u2022 Under Verification",verified:"Verified \u2022 Accepted",completed:"Verified \u2022 Accepted",needs_correction:"Correction Required",needs_revision:"Correction Required"};
 const originalVerificationRender=render;
 render=function(){originalVerificationRender();document.querySelectorAll("#list .status").forEach(function(badge){badge.textContent=verificationStatusLabels[badge.textContent]||badge.textContent;});document.querySelectorAll("#list button").forEach(function(button){if(button.textContent.trim()==="Verified")button.textContent="Accept / Verify";if(button.textContent.trim()==="Needs Correction")button.textContent="Request Correction";});};
+</script><script>
+const originalYearRender=render;
+render=function(){
+	rows.forEach(function(row){ row.year=row.student_year || row.year; });
+	originalYearRender();
+};
 </script></body></html>

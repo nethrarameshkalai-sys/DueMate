@@ -217,7 +217,15 @@ console.log("DueMate calendar user:",currentUserEmail);
    THEME
    ========================= */
 function applySavedTheme(){
-    const saved=localStorage.getItem("duemate-theme")||"system";
+    let saved=localStorage.getItem("duemate-theme")||"system";
+    try{
+        const user=JSON.parse(sessionStorage.getItem("duemate-user")||"null");
+        const email=String(user && user.email || "").trim().toLowerCase();
+        const userTheme=email && localStorage.getItem("duemate-theme-"+encodeURIComponent(email));
+        if(userTheme) saved=userTheme;
+    }catch(error){
+        console.warn("Unable to load saved calendar theme:",error);
+    }
 
     if(saved==="dark"){
         document.body.classList.add("dark");

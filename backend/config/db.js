@@ -122,6 +122,10 @@ function initializeMySQLSchema(db) {
         });
     });
 
+    db.query("ALTER TABLE `notifications` ADD COLUMN deleted_at timestamp NULL DEFAULT NULL", (error) => {
+        if (error && error.code !== "ER_DUP_FIELDNAME") console.error("Notification schema update failed:", error.message);
+    });
+
     db.query(`
         CREATE TABLE IF NOT EXISTS \`tasks\` (
             id varchar(100) NOT NULL,
@@ -233,6 +237,7 @@ function initializeMySQLSchema(db) {
             related_id varchar(100) DEFAULT NULL,
             related_type varchar(50) DEFAULT NULL,
             read_status tinyint(1) DEFAULT 0,
+            deleted_at timestamp NULL DEFAULT NULL,
             created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),

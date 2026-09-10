@@ -156,6 +156,9 @@
     }
 
     function toggleTheme() {
+        const now = Date.now();
+        if (now - (toggleTheme.lastToggleAt || 0) < 200) return;
+        toggleTheme.lastToggleAt = now;
         const user = email();
         const key = user ? "duemate-theme-" + encodeURIComponent(user) : "duemate-theme";
         const next = theme() === "dark" ? "light" : "dark";
@@ -333,13 +336,35 @@
         ensureStaffTopbar();
     }
 
-    function updateNotificationBadge() {
-        const showBadge = localStorage.getItem("duemate-notification-badge") === "show";
+    function setNotificationBadge(showBadge) {
         document.querySelectorAll(".notification-btn .notification-dot").forEach(function (dot) {
             if (dot) {
                 dot.style.display = showBadge ? "block" : "none";
             }
         });
+    }
+
+    async function updateNotificationBadge() {
+        const token = sessionStorage.getItem("duemate-token");
+        const userEmail = email();
+        if (!token || !userEmail) {
+            setNotificationBadge(false);
+            return;
+        }
+        try {
+            const response = await fetch((window.API_BASE || "http://localhost:5000") + "/api/notifications", {
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (!response.ok) throw new Error("Unable to load notification badge.");
+            const data = await response.json();
+            const showBadge = (data.notifications || []).some(function (notification) {
+                return Number(notification.read_status) !== 1;
+            });
+            localStorage.setItem("duemate-notification-badge-" + encodeURIComponent(userEmail), showBadge ? "show" : "hide");
+            setNotificationBadge(showBadge);
+        } catch (_) {
+            setNotificationBadge(localStorage.getItem("duemate-notification-badge-" + encodeURIComponent(userEmail)) === "show");
+        }
     }
 
     function normalizeNativeDrawer() {
@@ -425,7 +450,7 @@
 
     window.addEventListener("storage", function (event) {
         if (event.key === "duemate-theme" || (event.key && event.key.indexOf("duemate-theme-") === 0)) applyTheme();
-        if (event.key === "duemate-notification-badge") updateNotificationBadge();
+        if (event.key === "duemate-notification-badge" || (event.key && event.key.indexOf("duemate-notification-badge-") === 0)) updateNotificationBadge();
     });
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 })();
