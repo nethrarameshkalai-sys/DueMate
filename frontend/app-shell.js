@@ -1,7 +1,7 @@
 (function () {
     let sessionUser = null;
     try { sessionUser = JSON.parse(sessionStorage.getItem("duemate-user") || "null"); } catch (_) { sessionUser = null; }
-    const isStaff = sessionUser && sessionUser.role === "teacher";
+    const isStaff = sessionUser && ["teacher", "staff"].includes(String(sessionUser.role || "").toLowerCase());
     const pageName = location.pathname.split("/").pop() || "dashboard.html";
     const useMasterShell = false;
     if (["staff-students.html", "staff-verification.html"].includes(pageName) && !document.getElementById("date")) {
@@ -10,7 +10,7 @@
         verificationDate.hidden = true;
         document.body.appendChild(verificationDate);
     }
-    const removedPages = ["groups.html", "subjects.html", "settings.html"];
+    const removedPages = ["groups.html", "subjects.html"];
     if (removedPages.includes(pageName)) {
         location.replace("dashboard.html");
         return;
@@ -26,7 +26,7 @@
         ["assignments.html", "Assignments", "📄"],
         ["notifications.html", "Notifications", "🔔"]
     ];
-    const accountPages = [["profile.html", "Profile", "👤"]];
+    const accountPages = [["profile.html", "Profile", "👤"], ["settings.html", "Settings", "⚙️"]];
 
     function email() {
         const direct = sessionStorage.getItem("duemate-user-email") || sessionStorage.getItem("userEmail");
@@ -406,7 +406,7 @@
     }
 
     function removeDeprecatedControls() {
-        document.querySelectorAll("#settingsShortcut, #settingsBtn, [href='settings.html'], [onclick*='settings.html']").forEach(function (control) {
+        document.querySelectorAll("#settingsShortcut, #settingsBtn").forEach(function (control) {
             control.remove();
         });
     }

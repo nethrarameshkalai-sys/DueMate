@@ -1136,8 +1136,12 @@
                 let theme =
                     getUserTheme(userEmail);
 
+                const storedUserTheme = localStorage.getItem(
+                    "duemate-theme-" + encodeURIComponent(userEmail)
+                );
 
-                if (["dark", "light", "system"].includes(data.user.theme)) {
+
+                if (!storedUserTheme && ["dark", "light", "system"].includes(data.user.theme)) {
 
                     theme =
                         data.user.theme;
@@ -1291,9 +1295,21 @@
 
                 setTimeout(
                     function () {
+                        const requestedPage = new URLSearchParams(window.location.search).get("redirect");
+                        const allowedPages = [
+                            "staff-verification",
+                            "staff-dashboard",
+                            "assignments",
+                            "calendar",
+                            "notifications",
+                            "profile"
+                        ];
+                        const destination = allowedPages.includes(requestedPage)
+                            ? requestedPage + ".html"
+                            : "dashboard.html";
 
                         window.location.replace(
-                            "dashboard.html"
+                            destination
                         );
 
                     },
@@ -1408,6 +1424,6 @@
 
 </script>
 
-    <script src="app-shell.js?v=20260918"></script>
+    <script src="app-shell.js?v=20260921"></script>
 </body>
 </html>

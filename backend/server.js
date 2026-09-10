@@ -65,7 +65,11 @@ app.use(helmet());
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
-    message: "Too many requests from this IP, please try again later."
+    skip: (req) => req.method === "GET",
+    handler: (_req, res) => res.status(429).json({
+        success: false,
+        message: "Too many requests from this IP, please try again later."
+    })
 });
 
 const authLimiter = rateLimit({
@@ -664,15 +668,13 @@ app.post("/api/auth/register", async (req, res) => {
 // ============================================================
 
 app.post("/api/auth/login", (req, res) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     const identifier = String(email || "").trim().toLowerCase();
-    const requestedRole = String(role || "").trim().toLowerCase();
-    const accountRole = requestedRole === "staff" ? "teacher" : requestedRole;
 
-    if (!identifier || !password || !["student", "staff", "teacher"].includes(requestedRole)) {
+    if (!identifier || !password) {
         return res.status(400).json({
             success: false,
-            message: "Email, role and password are required."
+            message: "Email and password are required."
         });
     }
 
@@ -689,13 +691,13 @@ app.post("/api/auth/login", (req, res) => {
             password,
             theme
         FROM users
-        WHERE email = ? AND role = ?
+        WHERE email = ?
         LIMIT 1
     `;
 
     db.query(
         sql,
-        [identifier, accountRole],
+        [identifier],
         async (error, results) => {
             if (error) {
                 console.error(
@@ -733,6 +735,8 @@ app.post("/api/auth/login", (req, res) => {
                             "Invalid email or password."
                     });
                 }
+
+                user.role = user.role === "staff" ? "teacher" : user.role;
 
                 // Never send password to frontend.
                 delete user.password;
@@ -3161,7 +3165,8 @@ const submissionUpload = multer({
 function requireRole(requiredRole) {
     return (req, res, next) => {
         db.query("SELECT role FROM users WHERE email = ? LIMIT 1", [req.user.email], (error, results) => {
-            if (error || results.length === 0 || results[0].role !== requiredRole) {
+            const actualRole = results[0] && results[0].role === "staff" ? "teacher" : results[0] && results[0].role;
+            if (error || results.length === 0 || actualRole !== requiredRole) {
                 return res.status(403).json({ success: false, message: `Only ${requiredRole}s can perform this action.` });
             }
             next();
@@ -3450,7 +3455,7 @@ app.get("/api/assignments/:id/submissions", verifyToken, requireRole("teacher"),
     db.query(`SELECT s.*, a.title, u.name AS student_name, u.name AS studentName, u.year AS student_year, u.year AS year
         FROM assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
         JOIN users u ON u.email = s.student_email
-        JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+        JOIN users staff ON staff.email = ? AND staff.role IN ('teacher', 'staff')
         WHERE s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department ORDER BY s.submitted_at DESC`, [req.user.email, req.params.id, req.user.email], (error, submissions) => {
         if (error) return res.status(500).json({ success: false, message: "Unable to load submissions." });
         res.json({ success: true, submissions });
@@ -3480,7 +3485,7 @@ app.patch("/api/assignments/:assignmentId/submissions/:submissionId", verifyToke
         if (!currentRows.length) return res.status(404).json({ success: false, message: "Submission not found." });
         if (!["submitted", "resubmitted"].includes(currentRows[0].status)) return res.status(409).json({ success: false, message: "This submission is not awaiting verification." });
         db.query(`UPDATE assignment_submissions s JOIN assignments a ON a.id = s.assignment_id
-            JOIN users staff ON staff.email = ? AND staff.role = 'teacher'
+            JOIN users staff ON staff.email = ? AND staff.role IN ('teacher', 'staff')
             SET s.status = ?, s.feedback = ?, s.reviewed_at = CURRENT_TIMESTAMP
             WHERE s.id = ? AND s.assignment_id = ? AND a.teacher_email = ? AND a.college = staff.college AND a.department = staff.department`,
             [req.user.email, status, String(req.body.feedback || "").trim() || null, req.params.submissionId, req.params.assignmentId, req.user.email], (error, result) => {

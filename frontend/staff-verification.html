@@ -1,39 +1,362 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DueMate - Verification</title><script src="config.js"></script><link rel="stylesheet" href="app-shell.css?v=20260921"><style>
-:root{--ink:#202b38;--muted:#6d7885;--paper:#fffdf8;--line:#e8e1d5;--accent:#087f8c;--accent-dark:#075866;--ok:#198754;--warn:#b7791f}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Georgia,'Times New Roman',serif;color:var(--ink);background:linear-gradient(135deg,#f5efe5,#e6f3ef)}.page{max-width:1150px;margin:0 auto;padding:24px 22px 70px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.brand{font-size:25px;font-weight:700;color:var(--accent-dark)}.brand span{color:var(--accent)}.topbar button{border:1px solid var(--line);background:var(--paper);border-radius:5px;padding:9px 12px;margin-left:6px;cursor:pointer}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:2px;font:700 11px Arial,sans-serif}h1{margin:6px 0;font-size:clamp(32px,5vw,54px);font-weight:500}.intro{color:var(--muted);font:14px Arial,sans-serif}.filters{display:flex;gap:10px;margin:22px 0}.filters input,.filters select{padding:11px;border:1px solid var(--line);border-radius:5px;background:#fff}.filters input{flex:1}.item{background:rgba(255,253,248,.9);border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:12px;box-shadow:0 12px 32px rgba(47,62,70,.07)}.item h2{font-size:21px;font-weight:500;margin:0 0 7px}.meta{font:13px Arial,sans-serif;color:var(--muted);line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button,.button{border:0;border-radius:5px;padding:10px 13px;background:var(--accent);color:#fff;font:700 12px Arial,sans-serif;cursor:pointer;text-decoration:none}button.secondary,.button.secondary{background:#e5efec;color:var(--accent-dark)}button.warn{background:var(--warn)}.status{display:inline-block;padding:4px 8px;border-radius:12px;background:#e8f4ed;color:var(--ok);font:700 11px Arial,sans-serif}.status.needs_correction{background:#fff1dc;color:var(--warn)}textarea{width:100%;min-height:60px;margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:5px}.empty{color:var(--muted);font:14px Arial,sans-serif}@media(max-width:650px){.topbar,.filters{align-items:flex-start;flex-direction:column}.filters input,.filters select{width:100%}}
-</style>
-<style>
-	body.staff-page { font-family:"Segoe UI", Inter, Arial, sans-serif; }
-	.page { width:min(1180px,100%); max-width:none; margin:0 auto; padding:0 22px 70px; position:relative; }
-	.eyebrow { color:var(--purple); font:800 10px "Segoe UI",Arial,sans-serif; letter-spacing:1px; }
-	h1 { margin:0 0 8px; color:var(--text); font:800 clamp(30px,5vw,46px)/1.08 "Segoe UI",Inter,Arial,sans-serif; letter-spacing:-1.7px; }
-	.intro { color:var(--muted); font:14px "Segoe UI",Inter,Arial,sans-serif; }
-	.filters { display:flex; gap:10px; margin:22px 0; }
-	.filters input,.filters select { margin:0; border:1px solid rgba(120,125,160,.18); border-radius:12px; padding:12px 13px; color:var(--text); background:rgba(120,125,160,.055); font:12px "Segoe UI",Inter,Arial,sans-serif; }
-	.filters input { flex:1; }
-	.item { padding:18px; border:1px solid var(--border); border-radius:24px; background:var(--surface); box-shadow:0 18px 45px var(--shadow); backdrop-filter:blur(18px); animation:assignmentsCardFloat 7s ease-in-out infinite; }
-	.item h2 { margin:0 0 7px; color:var(--text); font:800 16px "Segoe UI",Inter,Arial,sans-serif; letter-spacing:-.2px; }
-	.meta { color:var(--muted); font:11px/1.55 "Segoe UI",Inter,Arial,sans-serif; }
-	.actions { margin-top:13px; }
-	button,.button { border-radius:12px; background:var(--purple); color:#fff; font:800 11px "Segoe UI",Inter,Arial,sans-serif; box-shadow:0 8px 20px rgba(117,108,255,.2); transition:transform .2s ease,background .2s ease; }
-	button:hover,.button:hover { transform:translateY(-2px); }
-	button.secondary,.button.secondary { background:rgba(117,108,255,.1); color:var(--purple); box-shadow:none; }
-	button.warn { background:var(--danger); }
-	textarea { border:1px solid rgba(120,125,160,.18); border-radius:12px; color:var(--text); background:rgba(120,125,160,.055); font:12px "Segoe UI",Inter,Arial,sans-serif; }
-	.status { border-radius:9px; background:rgba(85,213,176,.13); color:#159b78; font:800 9px "Segoe UI",Arial,sans-serif; }
-	.status.needs_correction { background:rgba(255,215,107,.18); color:#b78616; }
-	.empty { color:var(--muted); font:11px/1.5 "Segoe UI",Inter,Arial,sans-serif; }
-	@media (max-width:650px) { .filters { align-items:stretch; flex-direction:column; } .filters input,.filters select { width:100%; } .page { padding:0 14px 50px; } }
-</style></head><body class="staff-page"><div class="background"><div class="grid"></div><div class="glow glow-one"></div><div class="glow glow-two"></div><div class="glow glow-three"></div><div class="study-float book-one">ðŸ“š</div><div class="study-float book-two">ðŸ“–</div><div class="study-float pencil">âœï¸</div><div class="study-float calendar-float">ðŸ“…</div></div><main class="page"><div class="eyebrow">Staff review desk</div><h1>Verification</h1><p class="intro">Open student files, mark viewed, and verify or request corrections.</p><div class="filters"><input id="search" placeholder="Search assignment or student"><select id="status"><option value="">All statuses</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="needs_correction">Needs correction</option><option value="completed">Completed</option></select></div><section id="list"><div class="empty">Loading submissions...</div></section></main><script src="app-shell.js?v=20260921"></script><script>
-const API=window.API_BASE||'http://localhost:5000';const auth=()=>({Authorization:'Bearer '+sessionStorage.getItem('duemate-token')});let rows=[];function esc(v){return String(v||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function render(){const q=document.getElementById('search').value.toLowerCase(),status=document.getElementById('status').value;const data=rows.filter(s=>(!status||s.status===status)&&(s.title+' '+s.student_name+' '+s.student_email).toLowerCase().includes(q));document.getElementById('list').innerHTML=data.length?data.map(s=>`<article class="item"><h2>${esc(s.title)} <span class="status ${esc(s.status)}">${esc(s.status.replace('_',' '))}</span></h2><div class="meta">Student: ${esc(s.student_name)} (${esc(s.student_email)}) Â· Year ${esc(s.year)}<br>Submitted: ${new Date(s.submitted_at).toLocaleString()}<br>File: ${esc(s.file_name)}${s.viewed_at?'<br>Viewed: '+new Date(s.viewed_at).toLocaleString():''}</div><div class="actions"><button class="secondary" onclick="openFile('${esc(s.id)}')">Open submission PDF</button><button class="secondary" onclick="markViewed('${esc(s.id)}')">Mark viewed</button><button onclick="verify('${esc(s.id)}','verified')">Verified</button><button class="warn" onclick="verify('${esc(s.id)}','needs_correction')">Needs Correction</button></div><textarea id="feedback-${esc(s.id)}" placeholder="Remarks for the student">${esc(s.feedback)}</textarea></article>`).join(''):'<div class="empty">No submissions match these filters.</div>'}async function openFile(id){const r=await fetch(API+'/api/assignments/submissions/'+encodeURIComponent(id)+'/file',{headers:auth()});if(!r.ok)return alert('Unable to open submission file.');window.open(URL.createObjectURL(await r.blob()),'_blank','noopener')}async function markViewed(id){const r=await fetch(API+'/api/staff/verifications/'+encodeURIComponent(id)+'/viewed',{method:'PATCH',headers:auth()});if(r.ok){const row=rows.find(x=>x.id===id);if(row)row.viewed_at=new Date().toISOString();render()}}async function verify(id,status){const feedback=document.getElementById('feedback-'+id).value;const r=await fetch(API+'/api/staff/verifications/'+encodeURIComponent(id),{method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({status,feedback})});const d=await r.json();if(!r.ok)return alert(d.message||'Unable to update verification.');load()}async function load(){try{const r=await fetch(API+'/api/staff/verifications',{headers:auth()}),d=await r.json();if(!r.ok)throw new Error(d.message);rows=d.submissions;render()}catch(e){document.getElementById('list').textContent=e.message}}document.getElementById('search').addEventListener('input',render);document.getElementById('status').addEventListener('change',render);document.getElementById('date').textContent=new Date().toLocaleDateString(undefined,{day:'2-digit',month:'short',weekday:'short'});load();
-</script><script>
-const verificationStatusLabels={submitted:"Submitted \u2022 Under Verification",resubmitted:"Resubmitted \u2022 Under Verification",verified:"Verified \u2022 Accepted",completed:"Verified \u2022 Accepted",needs_correction:"Correction Required",needs_revision:"Correction Required"};
-const originalVerificationRender=render;
-render=function(){originalVerificationRender();document.querySelectorAll("#list .status").forEach(function(badge){badge.textContent=verificationStatusLabels[badge.textContent]||badge.textContent;});document.querySelectorAll("#list button").forEach(function(button){if(button.textContent.trim()==="Verified")button.textContent="Accept / Verify";if(button.textContent.trim()==="Needs Correction")button.textContent="Request Correction";});};
-</script><script>
-const originalYearRender=render;
-render=function(){
-	rows.forEach(function(row){ row.year=row.student_year || row.year; });
-	originalYearRender();
-};
-</script></body></html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DueMate - Verification</title>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="app-shell.css?v=20260921">
+    <style>
+        :root {
+            --bg: #f5f6ff;
+            --surface: rgba(255,255,255,.72);
+            --text: #25263a;
+            --muted: #777b91;
+            --border: rgba(255,255,255,.9);
+            --purple: #756cff;
+            --danger: #ff6f91;
+            --shadow: rgba(60,66,120,.14);
+        }
+
+        body.staff-page {
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Segoe UI", Inter, Arial, sans-serif;
+        }
+
+        body.staff-page.dark {
+            --bg: #0b1020;
+            --surface: rgba(20,26,49,.72);
+            --text: #f4f5ff;
+            --muted: #aeb3ca;
+            --border: rgba(255,255,255,.09);
+            --purple: #958cff;
+            --danger: #ff91bf;
+            --shadow: rgba(0,0,0,.42);
+        }
+
+        .verification-page {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+            padding: 0 22px 70px;
+        }
+
+        .verification-heading {
+            margin: 0 0 24px;
+        }
+
+        .eyebrow {
+            margin-bottom: 8px;
+            color: var(--purple);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            color: var(--text);
+            font-size: clamp(30px, 5vw, 46px);
+            line-height: 1.08;
+            letter-spacing: 0;
+        }
+
+        .intro {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .verification-filters {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 260px;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .verification-filters input,
+        .verification-filters select,
+        .feedback {
+            width: 100%;
+            border: 1px solid rgba(120,125,160,.18);
+            border-radius: 12px;
+            padding: 12px 13px;
+            outline: none;
+            color: var(--text);
+            background: rgba(120,125,160,.055);
+            font: 12px "Segoe UI", Arial, sans-serif;
+        }
+
+        .verification-filters input:focus,
+        .verification-filters select:focus,
+        .feedback:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(117,108,255,.12);
+        }
+
+        .verification-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .verification-item {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--surface);
+            box-shadow: 0 18px 45px var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .verification-item h2 {
+            margin: 0 0 8px;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-block;
+            margin-left: 6px;
+            border-radius: 9px;
+            padding: 4px 7px;
+            color: #159b78;
+            background: rgba(85,213,176,.13);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: capitalize;
+        }
+
+        .status.needs_correction { color: #b78616; background: rgba(255,215,107,.18); }
+
+        .feedback {
+            min-height: 74px;
+            margin-top: 12px;
+            resize: vertical;
+        }
+
+        .verification-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .verification-actions button,
+        .verification-error button {
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 13px;
+            cursor: pointer;
+            color: #fff;
+            background: var(--purple);
+            font: 800 11px "Segoe UI", Arial, sans-serif;
+        }
+
+        .verification-actions button.secondary {
+            color: var(--purple);
+            background: rgba(117,108,255,.1);
+        }
+
+        .verification-actions button.warn {
+            background: var(--danger);
+        }
+
+        button:disabled { cursor: wait; opacity: .55; }
+
+        .verification-empty,
+        .verification-error {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .verification-error {
+            display: grid;
+            gap: 12px;
+        }
+
+        @media (max-width: 700px) {
+            .verification-page { padding: 0 14px 50px; }
+            .verification-filters { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="staff-page">
+    <div class="background" aria-hidden="true">
+        <div class="grid"></div>
+        <div class="glow glow-one"></div>
+        <div class="glow glow-two"></div>
+        <div class="glow glow-three"></div>
+        <div class="study-float book-one">📚</div>
+        <div class="study-float book-two">📖</div>
+        <div class="study-float pencil">✏️</div>
+        <div class="study-float calendar-float">📅</div>
+    </div>
+
+    <main class="verification-page">
+        <header class="verification-heading">
+            <div class="eyebrow">Staff review desk</div>
+            <h1>Verification</h1>
+            <p class="intro">Open student files, mark viewed, and verify or request corrections.</p>
+        </header>
+
+        <div class="verification-filters">
+            <input id="search" type="search" placeholder="Search assignment or student" aria-label="Search assignment or student">
+            <select id="status" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                <option value="submitted">Submitted</option>
+                <option value="resubmitted">Resubmitted</option>
+                <option value="verified">Verified</option>
+                <option value="needs_correction">Needs correction</option>
+            </select>
+        </div>
+
+        <section id="list" class="verification-list" aria-live="polite">
+            <div class="verification-empty">Loading submissions...</div>
+        </section>
+    </main>
+
+    <script src="app-shell.js?v=20260921"></script>
+    <script>
+        const API = window.API_BASE || "http://localhost:5000";
+        const list = document.getElementById("list");
+        const search = document.getElementById("search");
+        const statusFilter = document.getElementById("status");
+        let submissions = [];
+
+        function authHeaders() {
+            return { Authorization: "Bearer " + (sessionStorage.getItem("duemate-token") || "") };
+        }
+
+        async function readResponse(response) {
+            const text = await response.text();
+            if (!text) return {};
+            try { return JSON.parse(text); } catch (_) { return { message: text.trim() }; }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>\"]/g, character => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;"
+            }[character]));
+        }
+
+        function statusLabel(status) {
+            return ({
+                submitted: "Submitted - Under Verification",
+                resubmitted: "Resubmitted - Under Verification",
+                verified: "Verified - Accepted",
+                needs_correction: "Correction Required"
+            }[status] || status || "Unknown");
+        }
+
+        function filteredSubmissions() {
+            const query = search.value.trim().toLowerCase();
+            const selectedStatus = statusFilter.value;
+            return submissions.filter(submission => {
+                const haystack = [submission.title, submission.student_name, submission.student_email].join(" ").toLowerCase();
+                return (!query || haystack.includes(query)) && (!selectedStatus || submission.status === selectedStatus);
+            });
+        }
+
+        function render() {
+            const visible = filteredSubmissions();
+            if (!visible.length) {
+                list.innerHTML = '<div class="verification-empty">No submissions match these filters.</div>';
+                return;
+            }
+
+            list.innerHTML = visible.map(submission => {
+                const waiting = ["submitted", "resubmitted"].includes(submission.status);
+                const feedback = escapeHtml(submission.feedback || "");
+                return `<article class="verification-item">
+                    <h2>${escapeHtml(submission.title)} <span class="status ${escapeHtml(submission.status)}">${escapeHtml(statusLabel(submission.status))}</span></h2>
+                    <div class="meta">Student: ${escapeHtml(submission.student_name)} (${escapeHtml(submission.student_email)})<br>
+                    Year: ${escapeHtml(submission.student_year || "Not provided")}<br>
+                    Submitted: ${new Date(submission.submitted_at).toLocaleString()}<br>
+                    File: ${escapeHtml(submission.file_name)}${submission.viewed_at ? "<br>Viewed: " + new Date(submission.viewed_at).toLocaleString() : ""}</div>
+                    <div class="verification-actions">
+                        <button class="secondary" type="button" data-action="open" data-id="${escapeHtml(submission.id)}">Open submission</button>
+                        <button class="secondary" type="button" data-action="viewed" data-id="${escapeHtml(submission.id)}">Mark viewed</button>
+                        ${waiting ? `<button type="button" data-action="verify" data-status="verified" data-id="${escapeHtml(submission.id)}">Accept / Verify</button>
+                        <button class="warn" type="button" data-action="verify" data-status="needs_correction" data-id="${escapeHtml(submission.id)}">Request Correction</button>` : ""}
+                    </div>
+                    <textarea class="feedback" data-feedback="${escapeHtml(submission.id)}" placeholder="Remarks for the student">${feedback}</textarea>
+                </article>`;
+            }).join("");
+        }
+
+        async function load() {
+            list.innerHTML = '<div class="verification-empty">Loading submissions...</div>';
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(API + "/api/staff/verifications", { headers: authHeaders(), signal: controller.signal });
+                clearTimeout(timeout);
+                const data = await readResponse(response);
+                if (response.status === 401) {
+                    sessionStorage.clear();
+                    window.location.href = "index.html?redirect=staff-verification";
+                    return;
+                }
+                if (!response.ok) throw new Error(data.message || "Unable to load verifications.");
+                submissions = data.submissions || [];
+                render();
+            } catch (error) {
+                const message = error.name === "AbortError" ? "Verification service timed out. Check the backend and retry." : (error.message || "Unable to load verifications.");
+                list.innerHTML = `<div class="verification-error"><span>${escapeHtml(message)}</span><button type="button" data-action="retry">Retry</button></div>`;
+            }
+        }
+
+        async function openSubmission(id) {
+            const response = await fetch(API + "/api/assignments/submissions/" + encodeURIComponent(id) + "/file", { headers: authHeaders() });
+            if (!response.ok) { alert("Unable to open submission file."); return; }
+            const url = URL.createObjectURL(await response.blob());
+            window.open(url, "_blank", "noopener");
+        }
+
+        async function markViewed(id) {
+            const response = await fetch(API + "/api/staff/verifications/" + encodeURIComponent(id) + "/viewed", { method: "PATCH", headers: authHeaders() });
+            const data = await readResponse(response);
+            if (!response.ok) { alert(data.message || "Unable to mark submission viewed."); return; }
+            const submission = submissions.find(item => String(item.id) === String(id));
+            if (submission) submission.viewed_at = new Date().toISOString();
+            render();
+        }
+
+        async function verify(id, nextStatus) {
+            const field = document.querySelector(`[data-feedback="${CSS.escape(String(id))}"]`);
+            const response = await fetch(API + "/api/staff/verifications/" + encodeURIComponent(id), {
+                method: "PATCH",
+                headers: { ...authHeaders(), "Content-Type": "application/json" },
+                body: JSON.stringify({ status: nextStatus, feedback: field ? field.value : "" })
+            });
+            const data = await readResponse(response);
+            if (!response.ok) { alert(data.message || "Unable to update verification."); return; }
+            await load();
+        }
+
+        list.addEventListener("click", event => {
+            const button = event.target.closest("button[data-action]");
+            if (!button) return;
+            const action = button.dataset.action;
+            if (action === "retry") load();
+            if (action === "open") openSubmission(button.dataset.id);
+            if (action === "viewed") markViewed(button.dataset.id);
+            if (action === "verify") verify(button.dataset.id, button.dataset.status);
+        });
+        search.addEventListener("input", render);
+        statusFilter.addEventListener("change", render);
+        load();
+    </script>
+</body>
+</html>
