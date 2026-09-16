@@ -668,13 +668,22 @@ app.post("/api/auth/register", async (req, res) => {
 // ============================================================
 
 app.post("/api/auth/login", (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, role = "student" } = req.body;
     const identifier = String(email || "").trim().toLowerCase();
+    const requestedRole = String(role).trim().toLowerCase();
+    const loginRole = requestedRole === "staff" ? "teacher" : requestedRole;
 
     if (!identifier || !password) {
         return res.status(400).json({
             success: false,
             message: "Email and password are required."
+        });
+    }
+
+    if (!["student", "teacher"].includes(loginRole)) {
+        return res.status(400).json({
+            success: false,
+            message: "Role must be student or staff."
         });
     }
 
@@ -690,14 +699,15 @@ app.post("/api/auth/login", (req, res) => {
             role,
             password,
             theme
-        FROM users
-        WHERE email = ?
+                FROM users
+                WHERE email = ?
+                    AND (role = ? OR (? = 'teacher' AND role = 'staff'))
         LIMIT 1
     `;
 
     db.query(
         sql,
-        [identifier],
+        [identifier, loginRole, loginRole],
         async (error, results) => {
             if (error) {
                 console.error(
